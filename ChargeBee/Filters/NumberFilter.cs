@@ -1,68 +1,75 @@
 ﻿using System;
 using ChargeBee.Api;
 
-namespace ChargeBee
+namespace ChargeBee.Filters
 {
-	public class NumberFilter<T,U> where U : EntityRequest<U>
-	{
-		private U req;
-		private String paramName;
-		private bool supportsPresenceOperator;
+    public class NumberFilter<T, TU> where TU : EntityRequest<TU>
+    {
+        private readonly string _paramName;
+        private readonly TU _req;
+        private bool _supportsPresenceOperator;
 
-		public NumberFilter(String paramName, U req) {
-			this.paramName = paramName;
-			this.req = req;
-		}
+        public NumberFilter(string paramName, TU req)
+        {
+            _paramName = paramName;
+            _req = req;
+        }
 
-		public NumberFilter<T,U> SupportsPresenceOperator(bool supportsPresenceOperator) {
-			this.supportsPresenceOperator = supportsPresenceOperator;
-			return this;
-		}
+        public NumberFilter<T, TU> SupportsPresenceOperator(bool supportsPresenceOperator)
+        {
+            _supportsPresenceOperator = supportsPresenceOperator;
+            return this;
+        }
 
-		public U Gt(T value) {
-			req.Params().AddOpt(paramName+"[gt]" , value);
-			return req;
-		}
+        public TU Gt(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[gt]", value);
+            return _req;
+        }
 
-		public U Lt(T value) {
-			req.Params().AddOpt(paramName+"[lt]" , value);
-			return req;
-		}
+        public TU Lt(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[lt]", value);
+            return _req;
+        }
 
-		public U Gte(T value) {
-			req.Params().AddOpt(paramName+"[gte]" , value);
-			return req;
-		}
+        public TU Gte(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[gte]", value);
+            return _req;
+        }
 
-		public U Lte(T value) {
-			req.Params().AddOpt(paramName+"[lte]" , value);
-			return req;
-		}
+        public TU Lte(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[lte]", value);
+            return _req;
+        }
 
-		public U Between(T val1, T val2){
-			req.Params().AddOpt(paramName+"[between]" , new T[]{val1,val2});
-			return req;
-		}
+        public TU Between(T val1, T val2)
+        {
+            _req.Params().AddOpt(_paramName + "[between]", new[] {val1, val2});
+            return _req;
+        }
 
-		public U Is(T value) {
-			req.Params().AddOpt(paramName+"[is]" , value);
-			return req;
-		}
+        public TU Is(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[is]", value);
+            return _req;
+        }
 
-		public U IsNot(T value) {
-			req.Params().AddOpt(paramName+"[is_not]" , value);
-			return req;
-		}
+        public TU IsNot(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[is_not]", value);
+            return _req;
+        }
 
-		public U IsPresent(bool value) {
-			if(!supportsPresenceOperator) {
-				throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
-			}
+        public TU IsPresent(bool value)
+        {
+            if (!_supportsPresenceOperator)
+                throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
 
-			req.Params().AddOpt(paramName + "[is_present]", value);
-			return req;
-		}
-
-	}
+            _req.Params().AddOpt(_paramName + "[is_present]", value);
+            return _req;
+        }
+    }
 }
-

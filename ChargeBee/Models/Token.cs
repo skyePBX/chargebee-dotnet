@@ -1,117 +1,83 @@
 using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
 using ChargeBee.Internal;
-using ChargeBee.Api;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Token : Resource 
+    public class Token : Resource
     {
-    
-        public Token() { }
+        public enum StatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "new")] New,
+            [EnumMember(Value = "expired")] Expired,
+            [EnumMember(Value = "consumed")] Consumed
+        }
+
+        public enum VaultEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "spreedly")] Spreedly,
+            [EnumMember(Value = "gateway")] Gateway
+        }
+
+        public Token()
+        {
+        }
 
         public Token(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Token(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Token(String jsonString)
+        public Token(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public GatewayEnum Gateway 
-        {
-            get { return GetEnum<GatewayEnum>("gateway", true); }
-        }
-        public string GatewayAccountId 
-        {
-            get { return GetValue<string>("gateway_account_id", true); }
-        }
-        public PaymentMethodTypeEnum PaymentMethodType 
-        {
-            get { return GetEnum<PaymentMethodTypeEnum>("payment_method_type", true); }
-        }
-        public StatusEnum Status 
-        {
-            get { return GetEnum<StatusEnum>("status", true); }
-        }
-        public string IdAtVault 
-        {
-            get { return GetValue<string>("id_at_vault", true); }
-        }
-        public VaultEnum Vault 
-        {
-            get { return GetEnum<VaultEnum>("vault", true); }
-        }
-        public string IpAddress 
-        {
-            get { return GetValue<string>("ip_address", false); }
-        }
-        public DateTime CreatedAt 
-        {
-            get { return (DateTime)GetDateTime("created_at", true); }
-        }
-        public DateTime? ExpiredAt 
-        {
-            get { return GetDateTime("expired_at", false); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public GatewayEnum Gateway => GetEnum<GatewayEnum>("gateway");
+
+        public string GatewayAccountId => GetValue<string>("gateway_account_id");
+
+        public PaymentMethodTypeEnum PaymentMethodType => GetEnum<PaymentMethodTypeEnum>("payment_method_type");
+
+        public StatusEnum Status => GetEnum<StatusEnum>("status");
+
+        public string IdAtVault => GetValue<string>("id_at_vault");
+
+        public VaultEnum Vault => GetEnum<VaultEnum>("vault");
+
+        public string IpAddress => GetValue<string>("ip_address", false);
+
+        public DateTime CreatedAt => (DateTime) GetDateTime("created_at");
+
+        public DateTime? ExpiredAt => GetDateTime("expired_at", false);
+
         #endregion
-        
-
-        public enum StatusEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "new")]
-            New,
-            [EnumMember(Value = "expired")]
-            Expired,
-            [EnumMember(Value = "consumed")]
-            Consumed,
-
-        }
-        public enum VaultEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "spreedly")]
-            Spreedly,
-            [EnumMember(Value = "gateway")]
-            Gateway,
-
-        }
 
         #region Subclasses
 

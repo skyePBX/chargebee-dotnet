@@ -1,37 +1,38 @@
 ﻿using System;
 using ChargeBee.Api;
 
-namespace ChargeBee
+namespace ChargeBee.Filters
 {
-	public class BooleanFilter<U> where U : EntityRequest<U>
-	{
-		private U req;
-		private String paramName;
-		private bool supportsPresenceOperator;
+    public class BooleanFilter<TU> where TU : EntityRequest<TU>
+    {
+        private readonly string _paramName;
+        private readonly TU _req;
+        private bool _supportsPresenceOperator;
 
-		public BooleanFilter(String paramName, U req) {
-			this.paramName = paramName;
-			this.req = req;
-		}
+        public BooleanFilter(string paramName, TU req)
+        {
+            _paramName = paramName;
+            _req = req;
+        }
 
-		public U Is(bool value) {
-			req.Params().AddOpt(paramName + "[is]", value);
-			return req;
-		}
+        public TU Is(bool value)
+        {
+            _req.Params().AddOpt(_paramName + "[is]", value);
+            return _req;
+        }
 
-		public BooleanFilter<U> SupportsPresenceOperator(bool supportsPresenceOperator) {
-			this.supportsPresenceOperator = supportsPresenceOperator;
-			return this;
-		}
+        public BooleanFilter<TU> SupportsPresenceOperator(bool supportsPresenceOperator)
+        {
+            _supportsPresenceOperator = supportsPresenceOperator;
+            return this;
+        }
 
-		public U IsPresent(bool value) {
-			if(!supportsPresenceOperator) {
-				throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
-			}
-			req.Params().AddOpt(paramName + "[is_present]", value);
-			return req;
-		}
-
-	}
+        public TU IsPresent(bool value)
+        {
+            if (!_supportsPresenceOperator)
+                throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
+            _req.Params().AddOpt(_paramName + "[is_present]", value);
+            return _req;
+        }
+    }
 }
-

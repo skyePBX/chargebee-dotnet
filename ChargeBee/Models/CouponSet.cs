@@ -1,207 +1,210 @@
 using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
+using System.IO;
 using ChargeBee.Api;
-using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using ChargeBee.Filters;
+using ChargeBee.Internal;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class CouponSet : Resource 
+    public class CouponSet : Resource
     {
-    
-        public CouponSet() { }
+        public CouponSet()
+        {
+        }
 
         public CouponSet(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public CouponSet(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public CouponSet(String jsonString)
+        public CouponSet(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static CreateRequest Create()
         {
-            string url = ApiUtil.BuildUrl("coupon_sets");
-            return new CreateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("coupon_sets");
+            return new CreateRequest(url, HttpMethod.Post);
         }
+
         public static AddCouponCodesRequest AddCouponCodes(string id)
         {
-            string url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "add_coupon_codes");
-            return new AddCouponCodesRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "add_coupon_codes");
+            return new AddCouponCodesRequest(url, HttpMethod.Post);
         }
+
         public static CouponSetListRequest List()
         {
-            string url = ApiUtil.BuildUrl("coupon_sets");
+            var url = ApiUtil.BuildUrl("coupon_sets");
             return new CouponSetListRequest(url);
         }
+
         public static EntityRequest<Type> Retrieve(string id)
         {
-            string url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id));
-            return new EntityRequest<Type>(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id));
+            return new EntityRequest<Type>(url, HttpMethod.Get);
         }
+
         public static UpdateRequest Update(string id)
         {
-            string url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "update");
-            return new UpdateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "update");
+            return new UpdateRequest(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> Delete(string id)
         {
-            string url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "delete");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "delete");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> DeleteUnusedCouponCodes(string id)
         {
-            string url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "delete_unused_coupon_codes");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("coupon_sets", CheckNull(id), "delete_unused_coupon_codes");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public string CouponId 
-        {
-            get { return GetValue<string>("coupon_id", true); }
-        }
-        public string Name 
-        {
-            get { return GetValue<string>("name", true); }
-        }
-        public int? TotalCount 
-        {
-            get { return GetValue<int?>("total_count", false); }
-        }
-        public int? RedeemedCount 
-        {
-            get { return GetValue<int?>("redeemed_count", false); }
-        }
-        public int? ArchivedCount 
-        {
-            get { return GetValue<int?>("archived_count", false); }
-        }
-        public JToken MetaData 
-        {
-            get { return GetJToken("meta_data", false); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public string CouponId => GetValue<string>("coupon_id");
+
+        public string Name => GetValue<string>("name");
+
+        public int? TotalCount => GetValue<int?>("total_count", false);
+
+        public int? RedeemedCount => GetValue<int?>("redeemed_count", false);
+
+        public int? ArchivedCount => GetValue<int?>("archived_count", false);
+
+        public JToken MetaData => GetJToken("meta_data", false);
+
         #endregion
-        
+
         #region Requests
-        public class CreateRequest : EntityRequest<CreateRequest> 
+
+        public class CreateRequest : EntityRequest<CreateRequest>
         {
-            public CreateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CreateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CreateRequest CouponId(string couponId) 
+            public CreateRequest CouponId(string couponId)
             {
-                m_params.Add("coupon_id", couponId);
+                MParams.Add("coupon_id", couponId);
                 return this;
             }
-            public CreateRequest Name(string name) 
+
+            public CreateRequest Name(string name)
             {
-                m_params.Add("name", name);
+                MParams.Add("name", name);
                 return this;
             }
-            public CreateRequest Id(string id) 
+
+            public CreateRequest Id(string id)
             {
-                m_params.Add("id", id);
+                MParams.Add("id", id);
                 return this;
             }
-            public CreateRequest MetaData(JToken metaData) 
+
+            public CreateRequest MetaData(JToken metaData)
             {
-                m_params.AddOpt("meta_data", metaData);
+                MParams.AddOpt("meta_data", metaData);
                 return this;
             }
         }
-        public class AddCouponCodesRequest : EntityRequest<AddCouponCodesRequest> 
+
+        public class AddCouponCodesRequest : EntityRequest<AddCouponCodesRequest>
         {
-            public AddCouponCodesRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public AddCouponCodesRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public AddCouponCodesRequest Code(List<string> code) 
+            public AddCouponCodesRequest Code(List<string> code)
             {
-                m_params.AddOpt("code", code);
+                MParams.AddOpt("code", code);
                 return this;
             }
         }
-        public class CouponSetListRequest : ListRequestBase<CouponSetListRequest> 
+
+        public class CouponSetListRequest : ListRequestBase<CouponSetListRequest>
         {
-            public CouponSetListRequest(string url) 
-                    : base(url)
+            public CouponSetListRequest(string url)
+                : base(url)
             {
             }
 
-            public StringFilter<CouponSetListRequest> Id() 
+            public StringFilter<CouponSetListRequest> Id()
             {
-                return new StringFilter<CouponSetListRequest>("id", this).SupportsMultiOperators(true);        
+                return new StringFilter<CouponSetListRequest>("id", this).SupportsMultiOperators(true);
             }
-            public StringFilter<CouponSetListRequest> Name() 
+
+            public StringFilter<CouponSetListRequest> Name()
             {
-                return new StringFilter<CouponSetListRequest>("name", this).SupportsMultiOperators(true);        
+                return new StringFilter<CouponSetListRequest>("name", this).SupportsMultiOperators(true);
             }
-            public StringFilter<CouponSetListRequest> CouponId() 
+
+            public StringFilter<CouponSetListRequest> CouponId()
             {
-                return new StringFilter<CouponSetListRequest>("coupon_id", this).SupportsMultiOperators(true);        
+                return new StringFilter<CouponSetListRequest>("coupon_id", this).SupportsMultiOperators(true);
             }
-            public NumberFilter<int, CouponSetListRequest> TotalCount() 
+
+            public NumberFilter<int, CouponSetListRequest> TotalCount()
             {
-                return new NumberFilter<int, CouponSetListRequest>("total_count", this);        
+                return new("total_count", this);
             }
-            public NumberFilter<int, CouponSetListRequest> RedeemedCount() 
+
+            public NumberFilter<int, CouponSetListRequest> RedeemedCount()
             {
-                return new NumberFilter<int, CouponSetListRequest>("redeemed_count", this);        
+                return new("redeemed_count", this);
             }
-            public NumberFilter<int, CouponSetListRequest> ArchivedCount() 
+
+            public NumberFilter<int, CouponSetListRequest> ArchivedCount()
             {
-                return new NumberFilter<int, CouponSetListRequest>("archived_count", this);        
+                return new("archived_count", this);
             }
         }
-        public class UpdateRequest : EntityRequest<UpdateRequest> 
+
+        public class UpdateRequest : EntityRequest<UpdateRequest>
         {
-            public UpdateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public UpdateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public UpdateRequest Name(string name) 
+            public UpdateRequest Name(string name)
             {
-                m_params.AddOpt("name", name);
+                MParams.AddOpt("name", name);
                 return this;
             }
-            public UpdateRequest MetaData(JToken metaData) 
+
+            public UpdateRequest MetaData(JToken metaData)
             {
-                m_params.AddOpt("meta_data", metaData);
+                MParams.AddOpt("meta_data", metaData);
                 return this;
             }
         }
+
         #endregion
 
 

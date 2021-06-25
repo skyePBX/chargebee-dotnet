@@ -1,65 +1,43 @@
 ﻿using System;
-using System.Net;
-using System.Runtime.Serialization;
 using System.Collections.Generic;
+using System.Net;
 
 namespace ChargeBee.Api
 {
     public class ApiException : Exception
     {
+        private readonly string _errorParam;
 
-		private string ErrorType = "";
-		private string ErrorParam = "";
+        private readonly string _errorType;
 
-		public ApiException (HttpStatusCode httpStatusCode, Dictionary<string, string> errorResp)
-			: base (errorResp ["message"])
+        public ApiException(HttpStatusCode httpStatusCode, Dictionary<string, string> errorResp)
+            : base(errorResp["message"])
         {
-			this.HttpStatusCode = httpStatusCode;
-			errorResp.TryGetValue ("type", out ErrorType);
-			this.ApiErrorCode = errorResp ["api_error_code"];
+            HttpStatusCode = httpStatusCode;
+            errorResp.TryGetValue("type", out _errorType);
+            ApiErrorCode = errorResp["api_error_code"];
 
-			errorResp.TryGetValue("param", out ErrorParam);
+            errorResp.TryGetValue("param", out _errorParam);
 
-			//Deprecated fields.
-			this.ApiCode = errorResp ["error_code"];
-			this.ApiMessage = errorResp ["error_msg"];
+            //Deprecated fields.
+            ApiCode = errorResp["error_code"];
+            ApiMessage = errorResp["error_msg"];
         }
 
         public HttpStatusCode HttpStatusCode { get; set; }
 
-		public string Type { 
-			get {
-				return this.ErrorType;
-			}
-		}
+        public string Type => _errorType;
 
-		public string ApiErrorCode { get; set; }
+        public string ApiErrorCode { get; set; }
 
-        public string Param { 
-			get {
-				return this.ErrorParam;
-			}
-		}
+        public string Param => _errorParam;
 
-        [System.Obsolete("Use HttpStatusCode")]
-        public HttpStatusCode HttpCode { 
-			get {
-				return HttpStatusCode;
-			}
-		}
+        [Obsolete("Use HttpStatusCode")] public HttpStatusCode HttpCode => HttpStatusCode;
 
-        [System.Obsolete("Use Code")]
-		public string ApiCode { get; set; }
+        [Obsolete("Use Code")] public string ApiCode { get; set; }
 
-        [System.Obsolete("Use Param")]
-		public string Parameter { 
-			get { 
-				return Param;
-			} 
-		}
+        [Obsolete("Use Param")] public string Parameter => Param;
 
-        [System.Obsolete("Use Message")]
-        public string ApiMessage { get; set; }
-
+        [Obsolete("Use Message")] public string ApiMessage { get; set; }
     }
 }

@@ -1,77 +1,55 @@
-using System.ComponentModel;
 using System.Runtime.Serialization;
 
 namespace ChargeBee.Models.Enums
 {
     public enum PaymentMethodEnum
     {
-
         [EnumMember(Value = "Unknown Enum")]
         UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
 
-        [EnumMember(Value = "card")]
-         Card,
+        [EnumMember(Value = "card")] Card,
 
-        [EnumMember(Value = "cash")]
-         Cash,
+        [EnumMember(Value = "cash")] Cash,
 
-        [EnumMember(Value = "check")]
-         Check,
+        [EnumMember(Value = "check")] Check,
 
-        [EnumMember(Value = "chargeback")]
-         Chargeback,
+        [EnumMember(Value = "chargeback")] Chargeback,
 
-        [EnumMember(Value = "bank_transfer")]
-         BankTransfer,
+        [EnumMember(Value = "bank_transfer")] BankTransfer,
 
         [EnumMember(Value = "amazon_payments")]
-         AmazonPayments,
+        AmazonPayments,
 
         [EnumMember(Value = "paypal_express_checkout")]
-         PaypalExpressCheckout,
+        PaypalExpressCheckout,
 
-        [EnumMember(Value = "direct_debit")]
-         DirectDebit,
+        [EnumMember(Value = "direct_debit")] DirectDebit,
 
-        [EnumMember(Value = "alipay")]
-         Alipay,
+        [EnumMember(Value = "alipay")] Alipay,
 
-        [EnumMember(Value = "unionpay")]
-         Unionpay,
+        [EnumMember(Value = "unionpay")] Unionpay,
 
-        [EnumMember(Value = "apple_pay")]
-         ApplePay,
+        [EnumMember(Value = "apple_pay")] ApplePay,
 
-        [EnumMember(Value = "wechat_pay")]
-         WechatPay,
+        [EnumMember(Value = "wechat_pay")] WechatPay,
 
-        [EnumMember(Value = "ach_credit")]
-         AchCredit,
+        [EnumMember(Value = "ach_credit")] AchCredit,
 
-        [EnumMember(Value = "sepa_credit")]
-         SepaCredit,
+        [EnumMember(Value = "sepa_credit")] SepaCredit,
 
-        [EnumMember(Value = "ideal")]
-         Ideal,
+        [EnumMember(Value = "ideal")] Ideal,
 
-        [EnumMember(Value = "google_pay")]
-         GooglePay,
+        [EnumMember(Value = "google_pay")] GooglePay,
 
-        [EnumMember(Value = "sofort")]
-         Sofort,
+        [EnumMember(Value = "sofort")] Sofort,
 
-        [EnumMember(Value = "bancontact")]
-         Bancontact,
+        [EnumMember(Value = "bancontact")] Bancontact,
 
-        [EnumMember(Value = "giropay")]
-         Giropay,
+        [EnumMember(Value = "giropay")] Giropay,
 
-        [EnumMember(Value = "dotpay")]
-         Dotpay,
+        [EnumMember(Value = "dotpay")] Dotpay,
 
-        [EnumMember(Value = "other")]
-         Other,
-
+        [EnumMember(Value = "other")] Other
     }
 }

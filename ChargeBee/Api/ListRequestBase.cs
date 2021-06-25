@@ -1,66 +1,70 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using ChargeBee.Filters;
 
 namespace ChargeBee.Api
 {
-	public class ListRequestBase<U> : EntityRequest<U> where U : ListRequestBase<U> 
-	{
-		public ListRequestBase(string url) : base(url, HttpMethod.GET)
-		{
-		}
+    public class ListRequestBase<TU> : EntityRequest<TU> where TU : ListRequestBase<TU>
+    {
+        public ListRequestBase(string url) : base(url, HttpMethod.Get)
+        {
+        }
 
-		public U Limit(int limit)
-		{
-			m_params.AddOpt("limit", limit);
-			return (U)this;
-		}
+        public TU Limit(int limit)
+        {
+            MParams.AddOpt("limit", limit);
+            return (TU) this;
+        }
 
-		public U Offset(string offset)
-		{
-			m_params.AddOpt("offset", offset);
-			return (U)this;
-		}
+        public TU Offset(string offset)
+        {
+            MParams.AddOpt("offset", offset);
+            return (TU) this;
+        }
 
-		public StringFilter<U> StringFilterParam(string paranName){
-			return new StringFilter<U>(paranName, (U)this).SupportsMultiOperators(true).SupportsPresenceOperator(true);
-		}
+        public StringFilter<TU> StringFilterParam(string paranName)
+        {
+            return new StringFilter<TU>(paranName, (TU) this).SupportsMultiOperators(true).SupportsPresenceOperator(true);
+        }
 
-		public BooleanFilter<U> BooleanFilterParam(string paramName){
-			return new BooleanFilter<U>(paramName, (U)this).SupportsPresenceOperator(true);
-    	}
-    
-		public NumberFilter<long, U> LongFilterParam(string paramName) {
-			return new NumberFilter<long, U>(paramName, (U)this).SupportsPresenceOperator(true);
-    	}
-    	
-    	
-    	public TimestampFilter<U> TimestampFilterParam(string paramName){
-			return new TimestampFilter<U>(paramName, (U)this).SupportsPresenceOperator(true);
-    	}
+        public BooleanFilter<TU> BooleanFilterParam(string paramName)
+        {
+            return new BooleanFilter<TU>(paramName, (TU) this).SupportsPresenceOperator(true);
+        }
 
-		public DateFilter<U> DateFilterParam(string paramName){
-			return new DateFilter<U>(paramName, (U)this).SupportsPresenceOperator(true);
-		}
+        public NumberFilter<long, TU> LongFilterParam(string paramName)
+        {
+            return new NumberFilter<long, TU>(paramName, (TU) this).SupportsPresenceOperator(true);
+        }
 
-		public new ListResult Request(ApiConfig env)
-		{
-			return ApiUtil.GetList(m_url, m_params, headers, env);
-		}
+
+        public TimestampFilter<TU> TimestampFilterParam(string paramName)
+        {
+            return new TimestampFilter<TU>(paramName, (TU) this).SupportsPresenceOperator(true);
+        }
+
+        public DateFilter<TU> DateFilterParam(string paramName)
+        {
+            return new DateFilter<TU>(paramName, (TU) this).SupportsPresenceOperator(true);
+        }
+
+        public new ListResult Request(ApiConfig env)
+        {
+            return ApiUtil.GetList(MUrl, MParams, Headers, env);
+        }
 
         public new Task<ListResult> RequestAsync(ApiConfig env)
         {
-            return ApiUtil.GetListAsync(m_url, m_params, headers, env);
+            return ApiUtil.GetListAsync(MUrl, MParams, Headers, env);
         }
 
         public new ListResult Request()
-		{
-			return Request(ApiConfig.Instance);
-		}
+        {
+            return Request(ApiConfig.Instance);
+        }
 
         public new Task<ListResult> RequestAsync()
         {
             return RequestAsync(ApiConfig.Instance);
         }
-
     }
 }

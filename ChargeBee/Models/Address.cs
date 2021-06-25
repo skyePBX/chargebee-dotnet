@@ -1,233 +1,216 @@
-using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Address : Resource 
+    public class Address : Resource
     {
-    
-        public Address() { }
+        public Address()
+        {
+        }
 
         public Address(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Address(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Address(String jsonString)
+        public Address(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static RetrieveRequest Retrieve()
         {
-            string url = ApiUtil.BuildUrl("addresses");
-            return new RetrieveRequest(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("addresses");
+            return new RetrieveRequest(url, HttpMethod.Get);
         }
+
         public static UpdateRequest Update()
         {
-            string url = ApiUtil.BuildUrl("addresses");
-            return new UpdateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("addresses");
+            return new UpdateRequest(url, HttpMethod.Post);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Label 
-        {
-            get { return GetValue<string>("label", true); }
-        }
-        public string FirstName 
-        {
-            get { return GetValue<string>("first_name", false); }
-        }
-        public string LastName 
-        {
-            get { return GetValue<string>("last_name", false); }
-        }
-        public string Email 
-        {
-            get { return GetValue<string>("email", false); }
-        }
-        public string Company 
-        {
-            get { return GetValue<string>("company", false); }
-        }
-        public string Phone 
-        {
-            get { return GetValue<string>("phone", false); }
-        }
-        public string Addr 
-        {
-            get { return GetValue<string>("addr", false); }
-        }
-        public string ExtendedAddr 
-        {
-            get { return GetValue<string>("extended_addr", false); }
-        }
-        public string ExtendedAddr2 
-        {
-            get { return GetValue<string>("extended_addr2", false); }
-        }
-        public string City 
-        {
-            get { return GetValue<string>("city", false); }
-        }
-        public string StateCode 
-        {
-            get { return GetValue<string>("state_code", false); }
-        }
-        public string State 
-        {
-            get { return GetValue<string>("state", false); }
-        }
-        public string Country 
-        {
-            get { return GetValue<string>("country", false); }
-        }
-        public string Zip 
-        {
-            get { return GetValue<string>("zip", false); }
-        }
-        public ValidationStatusEnum? ValidationStatus 
-        {
-            get { return GetEnum<ValidationStatusEnum>("validation_status", false); }
-        }
-        public string SubscriptionId 
-        {
-            get { return GetValue<string>("subscription_id", true); }
-        }
-        
+
+        public string Label => GetValue<string>("label");
+
+        public string FirstName => GetValue<string>("first_name", false);
+
+        public string LastName => GetValue<string>("last_name", false);
+
+        public string Email => GetValue<string>("email", false);
+
+        public string Company => GetValue<string>("company", false);
+
+        public string Phone => GetValue<string>("phone", false);
+
+        public string Addr => GetValue<string>("addr", false);
+
+        public string ExtendedAddr => GetValue<string>("extended_addr", false);
+
+        public string ExtendedAddr2 => GetValue<string>("extended_addr2", false);
+
+        public string City => GetValue<string>("city", false);
+
+        public string StateCode => GetValue<string>("state_code", false);
+
+        public string State => GetValue<string>("state", false);
+
+        public string Country => GetValue<string>("country", false);
+
+        public string Zip => GetValue<string>("zip", false);
+
+        public ValidationStatusEnum? ValidationStatus => GetEnum<ValidationStatusEnum>("validation_status", false);
+
+        public string SubscriptionId => GetValue<string>("subscription_id");
+
         #endregion
-        
+
         #region Requests
-        public class RetrieveRequest : EntityRequest<RetrieveRequest> 
+
+        public class RetrieveRequest : EntityRequest<RetrieveRequest>
         {
-            public RetrieveRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public RetrieveRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public RetrieveRequest SubscriptionId(string subscriptionId) 
+            public RetrieveRequest SubscriptionId(string subscriptionId)
             {
-                m_params.Add("subscription_id", subscriptionId);
+                MParams.Add("subscription_id", subscriptionId);
                 return this;
             }
-            public RetrieveRequest Label(string label) 
+
+            public RetrieveRequest Label(string label)
             {
-                m_params.Add("label", label);
+                MParams.Add("label", label);
                 return this;
             }
         }
-        public class UpdateRequest : EntityRequest<UpdateRequest> 
+
+        public class UpdateRequest : EntityRequest<UpdateRequest>
         {
-            public UpdateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public UpdateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public UpdateRequest SubscriptionId(string subscriptionId) 
+            public UpdateRequest SubscriptionId(string subscriptionId)
             {
-                m_params.Add("subscription_id", subscriptionId);
+                MParams.Add("subscription_id", subscriptionId);
                 return this;
             }
-            public UpdateRequest Label(string label) 
+
+            public UpdateRequest Label(string label)
             {
-                m_params.Add("label", label);
+                MParams.Add("label", label);
                 return this;
             }
-            public UpdateRequest FirstName(string firstName) 
+
+            public UpdateRequest FirstName(string firstName)
             {
-                m_params.AddOpt("first_name", firstName);
+                MParams.AddOpt("first_name", firstName);
                 return this;
             }
-            public UpdateRequest LastName(string lastName) 
+
+            public UpdateRequest LastName(string lastName)
             {
-                m_params.AddOpt("last_name", lastName);
+                MParams.AddOpt("last_name", lastName);
                 return this;
             }
-            public UpdateRequest Email(string email) 
+
+            public UpdateRequest Email(string email)
             {
-                m_params.AddOpt("email", email);
+                MParams.AddOpt("email", email);
                 return this;
             }
-            public UpdateRequest Company(string company) 
+
+            public UpdateRequest Company(string company)
             {
-                m_params.AddOpt("company", company);
+                MParams.AddOpt("company", company);
                 return this;
             }
-            public UpdateRequest Phone(string phone) 
+
+            public UpdateRequest Phone(string phone)
             {
-                m_params.AddOpt("phone", phone);
+                MParams.AddOpt("phone", phone);
                 return this;
             }
-            public UpdateRequest Addr(string addr) 
+
+            public UpdateRequest Addr(string addr)
             {
-                m_params.AddOpt("addr", addr);
+                MParams.AddOpt("addr", addr);
                 return this;
             }
-            public UpdateRequest ExtendedAddr(string extendedAddr) 
+
+            public UpdateRequest ExtendedAddr(string extendedAddr)
             {
-                m_params.AddOpt("extended_addr", extendedAddr);
+                MParams.AddOpt("extended_addr", extendedAddr);
                 return this;
             }
-            public UpdateRequest ExtendedAddr2(string extendedAddr2) 
+
+            public UpdateRequest ExtendedAddr2(string extendedAddr2)
             {
-                m_params.AddOpt("extended_addr2", extendedAddr2);
+                MParams.AddOpt("extended_addr2", extendedAddr2);
                 return this;
             }
-            public UpdateRequest City(string city) 
+
+            public UpdateRequest City(string city)
             {
-                m_params.AddOpt("city", city);
+                MParams.AddOpt("city", city);
                 return this;
             }
-            public UpdateRequest StateCode(string stateCode) 
+
+            public UpdateRequest StateCode(string stateCode)
             {
-                m_params.AddOpt("state_code", stateCode);
+                MParams.AddOpt("state_code", stateCode);
                 return this;
             }
-            public UpdateRequest State(string state) 
+
+            public UpdateRequest State(string state)
             {
-                m_params.AddOpt("state", state);
+                MParams.AddOpt("state", state);
                 return this;
             }
-            public UpdateRequest Zip(string zip) 
+
+            public UpdateRequest Zip(string zip)
             {
-                m_params.AddOpt("zip", zip);
+                MParams.AddOpt("zip", zip);
                 return this;
             }
-            public UpdateRequest Country(string country) 
+
+            public UpdateRequest Country(string country)
             {
-                m_params.AddOpt("country", country);
+                MParams.AddOpt("country", country);
                 return this;
             }
-            public UpdateRequest ValidationStatus(ChargeBee.Models.Enums.ValidationStatusEnum validationStatus) 
+
+            public UpdateRequest ValidationStatus(ValidationStatusEnum validationStatus)
             {
-                m_params.AddOpt("validation_status", validationStatus);
+                MParams.AddOpt("validation_status", validationStatus);
                 return this;
             }
         }
+
         #endregion
 
 

@@ -1,168 +1,162 @@
 using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Filters;
+using ChargeBee.Filters.enums;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Comment : Resource 
+    public class Comment : Resource
     {
-    
-        public Comment() { }
+        public enum TypeEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "user")] User,
+            [EnumMember(Value = "system")] System
+        }
+
+        public Comment()
+        {
+        }
 
         public Comment(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Comment(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Comment(String jsonString)
+        public Comment(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static CreateRequest Create()
         {
-            string url = ApiUtil.BuildUrl("comments");
-            return new CreateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("comments");
+            return new CreateRequest(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> Retrieve(string id)
         {
-            string url = ApiUtil.BuildUrl("comments", CheckNull(id));
-            return new EntityRequest<Type>(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("comments", CheckNull(id));
+            return new EntityRequest<Type>(url, HttpMethod.Get);
         }
+
         public static CommentListRequest List()
         {
-            string url = ApiUtil.BuildUrl("comments");
+            var url = ApiUtil.BuildUrl("comments");
             return new CommentListRequest(url);
         }
+
         public static EntityRequest<Type> Delete(string id)
         {
-            string url = ApiUtil.BuildUrl("comments", CheckNull(id), "delete");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("comments", CheckNull(id), "delete");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public EntityTypeEnum EntityType 
-        {
-            get { return GetEnum<EntityTypeEnum>("entity_type", true); }
-        }
-        public string AddedBy 
-        {
-            get { return GetValue<string>("added_by", false); }
-        }
-        public string Notes 
-        {
-            get { return GetValue<string>("notes", true); }
-        }
-        public DateTime CreatedAt 
-        {
-            get { return (DateTime)GetDateTime("created_at", true); }
-        }
-        public TypeEnum CommentType 
-        {
-            get { return GetEnum<TypeEnum>("type", true); }
-        }
-        public string EntityId 
-        {
-            get { return GetValue<string>("entity_id", true); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public EntityTypeEnum EntityType => GetEnum<EntityTypeEnum>("entity_type");
+
+        public string AddedBy => GetValue<string>("added_by", false);
+
+        public string Notes => GetValue<string>("notes");
+
+        public DateTime CreatedAt => (DateTime) GetDateTime("created_at");
+
+        public TypeEnum CommentType => GetEnum<TypeEnum>("type");
+
+        public string EntityId => GetValue<string>("entity_id");
+
         #endregion
-        
+
         #region Requests
-        public class CreateRequest : EntityRequest<CreateRequest> 
+
+        public class CreateRequest : EntityRequest<CreateRequest>
         {
-            public CreateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CreateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CreateRequest EntityType(ChargeBee.Models.Enums.EntityTypeEnum entityType) 
+            public CreateRequest EntityType(EntityTypeEnum entityType)
             {
-                m_params.Add("entity_type", entityType);
+                MParams.Add("entity_type", entityType);
                 return this;
             }
-            public CreateRequest EntityId(string entityId) 
+
+            public CreateRequest EntityId(string entityId)
             {
-                m_params.Add("entity_id", entityId);
+                MParams.Add("entity_id", entityId);
                 return this;
             }
-            public CreateRequest Notes(string notes) 
+
+            public CreateRequest Notes(string notes)
             {
-                m_params.Add("notes", notes);
+                MParams.Add("notes", notes);
                 return this;
             }
-            public CreateRequest AddedBy(string addedBy) 
+
+            public CreateRequest AddedBy(string addedBy)
             {
-                m_params.AddOpt("added_by", addedBy);
+                MParams.AddOpt("added_by", addedBy);
                 return this;
             }
         }
-        public class CommentListRequest : ListRequestBase<CommentListRequest> 
+
+        public class CommentListRequest : ListRequestBase<CommentListRequest>
         {
-            public CommentListRequest(string url) 
-                    : base(url)
+            public CommentListRequest(string url)
+                : base(url)
             {
             }
 
-            public CommentListRequest EntityType(ChargeBee.Models.Enums.EntityTypeEnum entityType) 
+            public CommentListRequest EntityType(EntityTypeEnum entityType)
             {
-                m_params.AddOpt("entity_type", entityType);
+                MParams.AddOpt("entity_type", entityType);
                 return this;
             }
-            public CommentListRequest EntityId(string entityId) 
+
+            public CommentListRequest EntityId(string entityId)
             {
-                m_params.AddOpt("entity_id", entityId);
+                MParams.AddOpt("entity_id", entityId);
                 return this;
             }
-            public TimestampFilter<CommentListRequest> CreatedAt() 
+
+            public TimestampFilter<CommentListRequest> CreatedAt()
             {
-                return new TimestampFilter<CommentListRequest>("created_at", this);        
+                return new("created_at", this);
             }
-            public CommentListRequest SortByCreatedAt(SortOrderEnum order) {
-                m_params.AddOpt("sort_by["+order.ToString().ToLower()+"]","created_at");
+
+            public CommentListRequest SortByCreatedAt(SortOrderEnum order)
+            {
+                MParams.AddOpt("sort_by[" + order.ToString().ToLower() + "]", "created_at");
                 return this;
             }
         }
+
         #endregion
-
-        public enum TypeEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "user")]
-            User,
-            [EnumMember(Value = "system")]
-            System,
-
-        }
 
         #region Subclasses
 

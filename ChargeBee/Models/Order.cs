@@ -1,1356 +1,1439 @@
 using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Filters;
+using ChargeBee.Filters.enums;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Order : Resource 
+    public class Order : Resource
     {
-    
-        public Order() { }
+        public enum CancellationReasonEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+
+            [EnumMember(Value = "shipping_cut_off_passed")]
+            ShippingCutOffPassed,
+
+            [EnumMember(Value = "product_unsatisfactory")]
+            ProductUnsatisfactory,
+
+            [EnumMember(Value = "third_party_cancellation")]
+            ThirdPartyCancellation,
+
+            [EnumMember(Value = "product_not_required")]
+            ProductNotRequired,
+
+            [EnumMember(Value = "delivery_date_missed")]
+            DeliveryDateMissed,
+
+            [EnumMember(Value = "alternative_found")]
+            AlternativeFound,
+
+            [EnumMember(Value = "invoice_written_off")]
+            InvoiceWrittenOff,
+            [EnumMember(Value = "invoice_voided")] InvoiceVoided,
+
+            [EnumMember(Value = "fraudulent_transaction")]
+            FraudulentTransaction,
+
+            [EnumMember(Value = "payment_declined")]
+            PaymentDeclined,
+
+            [EnumMember(Value = "subscription_cancelled")]
+            SubscriptionCancelled,
+
+            [EnumMember(Value = "product_not_available")]
+            ProductNotAvailable,
+            [EnumMember(Value = "others")] Others
+        }
+
+        public enum OrderTypeEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "manual")] Manual,
+
+            [EnumMember(Value = "system_generated")]
+            SystemGenerated
+        }
+
+        public enum PaymentStatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "not_paid")] NotPaid,
+            [EnumMember(Value = "paid")] Paid
+        }
+
+        public enum StatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "new")] New,
+            [EnumMember(Value = "processing")] Processing,
+            [EnumMember(Value = "complete")] Complete,
+            [EnumMember(Value = "cancelled")] Cancelled,
+            [EnumMember(Value = "voided")] Voided,
+            [EnumMember(Value = "queued")] Queued,
+
+            [EnumMember(Value = "awaiting_shipment")]
+            AwaitingShipment,
+            [EnumMember(Value = "on_hold")] OnHold,
+            [EnumMember(Value = "delivered")] Delivered,
+            [EnumMember(Value = "shipped")] Shipped,
+
+            [EnumMember(Value = "partially_delivered")]
+            PartiallyDelivered,
+            [EnumMember(Value = "returned")] Returned
+        }
+
+        public Order()
+        {
+        }
 
         public Order(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Order(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Order(String jsonString)
+        public Order(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static CreateRequest Create()
         {
-            string url = ApiUtil.BuildUrl("orders");
-            return new CreateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders");
+            return new CreateRequest(url, HttpMethod.Post);
         }
+
         public static UpdateRequest Update(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id));
-            return new UpdateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id));
+            return new UpdateRequest(url, HttpMethod.Post);
         }
+
         public static ImportOrderRequest ImportOrder()
         {
-            string url = ApiUtil.BuildUrl("orders", "import_order");
-            return new ImportOrderRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", "import_order");
+            return new ImportOrderRequest(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> AssignOrderNumber(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id), "assign_order_number");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id), "assign_order_number");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         public static CancelRequest Cancel(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id), "cancel");
-            return new CancelRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id), "cancel");
+            return new CancelRequest(url, HttpMethod.Post);
         }
+
         public static CreateRefundableCreditNoteRequest CreateRefundableCreditNote(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id), "create_refundable_credit_note");
-            return new CreateRefundableCreditNoteRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id), "create_refundable_credit_note");
+            return new CreateRefundableCreditNoteRequest(url, HttpMethod.Post);
         }
+
         public static ReopenRequest Reopen(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id), "reopen");
-            return new ReopenRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id), "reopen");
+            return new ReopenRequest(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> Retrieve(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id));
-            return new EntityRequest<Type>(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id));
+            return new EntityRequest<Type>(url, HttpMethod.Get);
         }
+
         public static EntityRequest<Type> Delete(string id)
         {
-            string url = ApiUtil.BuildUrl("orders", CheckNull(id), "delete");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("orders", CheckNull(id), "delete");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         public static OrderListRequest List()
         {
-            string url = ApiUtil.BuildUrl("orders");
+            var url = ApiUtil.BuildUrl("orders");
             return new OrderListRequest(url);
         }
+
         [Obsolete]
         public static ListRequest OrdersForInvoice(string id)
         {
-            string url = ApiUtil.BuildUrl("invoices", CheckNull(id), "orders");
+            var url = ApiUtil.BuildUrl("invoices", CheckNull(id), "orders");
             return new ListRequest(url);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public string DocumentNumber 
-        {
-            get { return GetValue<string>("document_number", false); }
-        }
-        public string InvoiceId 
-        {
-            get { return GetValue<string>("invoice_id", false); }
-        }
-        public string SubscriptionId 
-        {
-            get { return GetValue<string>("subscription_id", false); }
-        }
-        public string CustomerId 
-        {
-            get { return GetValue<string>("customer_id", false); }
-        }
-        public StatusEnum? Status 
-        {
-            get { return GetEnum<StatusEnum>("status", false); }
-        }
-        public CancellationReasonEnum? CancellationReason 
-        {
-            get { return GetEnum<CancellationReasonEnum>("cancellation_reason", false); }
-        }
-        public PaymentStatusEnum? PaymentStatus 
-        {
-            get { return GetEnum<PaymentStatusEnum>("payment_status", false); }
-        }
-        public OrderTypeEnum? OrderType 
-        {
-            get { return GetEnum<OrderTypeEnum>("order_type", false); }
-        }
-        public PriceTypeEnum PriceType 
-        {
-            get { return GetEnum<PriceTypeEnum>("price_type", true); }
-        }
-        public string ReferenceId 
-        {
-            get { return GetValue<string>("reference_id", false); }
-        }
-        public string FulfillmentStatus 
-        {
-            get { return GetValue<string>("fulfillment_status", false); }
-        }
-        public DateTime? OrderDate 
-        {
-            get { return GetDateTime("order_date", false); }
-        }
-        public DateTime? ShippingDate 
-        {
-            get { return GetDateTime("shipping_date", false); }
-        }
-        public string Note 
-        {
-            get { return GetValue<string>("note", false); }
-        }
-        public string TrackingId 
-        {
-            get { return GetValue<string>("tracking_id", false); }
-        }
-        public string BatchId 
-        {
-            get { return GetValue<string>("batch_id", false); }
-        }
-        public string CreatedBy 
-        {
-            get { return GetValue<string>("created_by", false); }
-        }
-        public string ShipmentCarrier 
-        {
-            get { return GetValue<string>("shipment_carrier", false); }
-        }
-        public int? InvoiceRoundOffAmount 
-        {
-            get { return GetValue<int?>("invoice_round_off_amount", false); }
-        }
-        public int? Tax 
-        {
-            get { return GetValue<int?>("tax", false); }
-        }
-        public int? AmountPaid 
-        {
-            get { return GetValue<int?>("amount_paid", false); }
-        }
-        public int? AmountAdjusted 
-        {
-            get { return GetValue<int?>("amount_adjusted", false); }
-        }
-        public int? RefundableCreditsIssued 
-        {
-            get { return GetValue<int?>("refundable_credits_issued", false); }
-        }
-        public int? RefundableCredits 
-        {
-            get { return GetValue<int?>("refundable_credits", false); }
-        }
-        public int? RoundingAdjustement 
-        {
-            get { return GetValue<int?>("rounding_adjustement", false); }
-        }
-        public DateTime? PaidOn 
-        {
-            get { return GetDateTime("paid_on", false); }
-        }
-        public DateTime? ShippingCutOffDate 
-        {
-            get { return GetDateTime("shipping_cut_off_date", false); }
-        }
-        public DateTime CreatedAt 
-        {
-            get { return (DateTime)GetDateTime("created_at", true); }
-        }
-        public DateTime? StatusUpdateAt 
-        {
-            get { return GetDateTime("status_update_at", false); }
-        }
-        public DateTime? DeliveredAt 
-        {
-            get { return GetDateTime("delivered_at", false); }
-        }
-        public DateTime? ShippedAt 
-        {
-            get { return GetDateTime("shipped_at", false); }
-        }
-        public long? ResourceVersion 
-        {
-            get { return GetValue<long?>("resource_version", false); }
-        }
-        public DateTime? UpdatedAt 
-        {
-            get { return GetDateTime("updated_at", false); }
-        }
-        public DateTime? CancelledAt 
-        {
-            get { return GetDateTime("cancelled_at", false); }
-        }
-        public List<OrderOrderLineItem> OrderLineItems 
-        {
-            get { return GetResourceList<OrderOrderLineItem>("order_line_items"); }
-        }
-        public OrderShippingAddress ShippingAddress 
-        {
-            get { return GetSubResource<OrderShippingAddress>("shipping_address"); }
-        }
-        public OrderBillingAddress BillingAddress 
-        {
-            get { return GetSubResource<OrderBillingAddress>("billing_address"); }
-        }
-        public int? Discount 
-        {
-            get { return GetValue<int?>("discount", false); }
-        }
-        public int? SubTotal 
-        {
-            get { return GetValue<int?>("sub_total", false); }
-        }
-        public int? Total 
-        {
-            get { return GetValue<int?>("total", false); }
-        }
-        public List<OrderLineItemTax> LineItemTaxes 
-        {
-            get { return GetResourceList<OrderLineItemTax>("line_item_taxes"); }
-        }
-        public List<OrderLineItemDiscount> LineItemDiscounts 
-        {
-            get { return GetResourceList<OrderLineItemDiscount>("line_item_discounts"); }
-        }
-        public List<OrderLinkedCreditNote> LinkedCreditNotes 
-        {
-            get { return GetResourceList<OrderLinkedCreditNote>("linked_credit_notes"); }
-        }
-        public bool Deleted 
-        {
-            get { return GetValue<bool>("deleted", true); }
-        }
-        public string CurrencyCode 
-        {
-            get { return GetValue<string>("currency_code", false); }
-        }
-        public bool? IsGifted 
-        {
-            get { return GetValue<bool?>("is_gifted", false); }
-        }
-        public string GiftNote 
-        {
-            get { return GetValue<string>("gift_note", false); }
-        }
-        public string GiftId 
-        {
-            get { return GetValue<string>("gift_id", false); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public string DocumentNumber => GetValue<string>("document_number", false);
+
+        public string InvoiceId => GetValue<string>("invoice_id", false);
+
+        public string SubscriptionId => GetValue<string>("subscription_id", false);
+
+        public string CustomerId => GetValue<string>("customer_id", false);
+
+        public StatusEnum? Status => GetEnum<StatusEnum>("status", false);
+
+        public CancellationReasonEnum? CancellationReason =>
+            GetEnum<CancellationReasonEnum>("cancellation_reason", false);
+
+        public PaymentStatusEnum? PaymentStatus => GetEnum<PaymentStatusEnum>("payment_status", false);
+
+        public OrderTypeEnum? OrderType => GetEnum<OrderTypeEnum>("order_type", false);
+
+        public PriceTypeEnum PriceType => GetEnum<PriceTypeEnum>("price_type");
+
+        public string ReferenceId => GetValue<string>("reference_id", false);
+
+        public string FulfillmentStatus => GetValue<string>("fulfillment_status", false);
+
+        public DateTime? OrderDate => GetDateTime("order_date", false);
+
+        public DateTime? ShippingDate => GetDateTime("shipping_date", false);
+
+        public string Note => GetValue<string>("note", false);
+
+        public string TrackingId => GetValue<string>("tracking_id", false);
+
+        public string BatchId => GetValue<string>("batch_id", false);
+
+        public string CreatedBy => GetValue<string>("created_by", false);
+
+        public string ShipmentCarrier => GetValue<string>("shipment_carrier", false);
+
+        public int? InvoiceRoundOffAmount => GetValue<int?>("invoice_round_off_amount", false);
+
+        public int? Tax => GetValue<int?>("tax", false);
+
+        public int? AmountPaid => GetValue<int?>("amount_paid", false);
+
+        public int? AmountAdjusted => GetValue<int?>("amount_adjusted", false);
+
+        public int? RefundableCreditsIssued => GetValue<int?>("refundable_credits_issued", false);
+
+        public int? RefundableCredits => GetValue<int?>("refundable_credits", false);
+
+        public int? RoundingAdjustement => GetValue<int?>("rounding_adjustement", false);
+
+        public DateTime? PaidOn => GetDateTime("paid_on", false);
+
+        public DateTime? ShippingCutOffDate => GetDateTime("shipping_cut_off_date", false);
+
+        public DateTime CreatedAt => (DateTime) GetDateTime("created_at");
+
+        public DateTime? StatusUpdateAt => GetDateTime("status_update_at", false);
+
+        public DateTime? DeliveredAt => GetDateTime("delivered_at", false);
+
+        public DateTime? ShippedAt => GetDateTime("shipped_at", false);
+
+        public long? ResourceVersion => GetValue<long?>("resource_version", false);
+
+        public DateTime? UpdatedAt => GetDateTime("updated_at", false);
+
+        public DateTime? CancelledAt => GetDateTime("cancelled_at", false);
+
+        public List<OrderOrderLineItem> OrderLineItems => GetResourceList<OrderOrderLineItem>("order_line_items");
+
+        public OrderShippingAddress ShippingAddress => GetSubResource<OrderShippingAddress>("shipping_address");
+
+        public OrderBillingAddress BillingAddress => GetSubResource<OrderBillingAddress>("billing_address");
+
+        public int? Discount => GetValue<int?>("discount", false);
+
+        public int? SubTotal => GetValue<int?>("sub_total", false);
+
+        public int? Total => GetValue<int?>("total", false);
+
+        public List<OrderLineItemTax> LineItemTaxes => GetResourceList<OrderLineItemTax>("line_item_taxes");
+
+        public List<OrderLineItemDiscount> LineItemDiscounts =>
+            GetResourceList<OrderLineItemDiscount>("line_item_discounts");
+
+        public List<OrderLinkedCreditNote> LinkedCreditNotes =>
+            GetResourceList<OrderLinkedCreditNote>("linked_credit_notes");
+
+        public bool Deleted => GetValue<bool>("deleted");
+
+        public string CurrencyCode => GetValue<string>("currency_code", false);
+
+        public bool? IsGifted => GetValue<bool?>("is_gifted", false);
+
+        public string GiftNote => GetValue<string>("gift_note", false);
+
+        public string GiftId => GetValue<string>("gift_id", false);
+
         #endregion
-        
+
         #region Requests
-        public class CreateRequest : EntityRequest<CreateRequest> 
+
+        public class CreateRequest : EntityRequest<CreateRequest>
         {
-            public CreateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CreateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CreateRequest Id(string id) 
+            public CreateRequest Id(string id)
             {
-                m_params.AddOpt("id", id);
+                MParams.AddOpt("id", id);
                 return this;
             }
-            public CreateRequest InvoiceId(string invoiceId) 
+
+            public CreateRequest InvoiceId(string invoiceId)
             {
-                m_params.Add("invoice_id", invoiceId);
+                MParams.Add("invoice_id", invoiceId);
                 return this;
             }
-            public CreateRequest Status(StatusEnum status) 
+
+            public CreateRequest Status(StatusEnum status)
             {
-                m_params.AddOpt("status", status);
+                MParams.AddOpt("status", status);
                 return this;
             }
-            public CreateRequest ReferenceId(string referenceId) 
+
+            public CreateRequest ReferenceId(string referenceId)
             {
-                m_params.AddOpt("reference_id", referenceId);
+                MParams.AddOpt("reference_id", referenceId);
                 return this;
             }
-            public CreateRequest FulfillmentStatus(string fulfillmentStatus) 
+
+            public CreateRequest FulfillmentStatus(string fulfillmentStatus)
             {
-                m_params.AddOpt("fulfillment_status", fulfillmentStatus);
+                MParams.AddOpt("fulfillment_status", fulfillmentStatus);
                 return this;
             }
-            public CreateRequest Note(string note) 
+
+            public CreateRequest Note(string note)
             {
-                m_params.AddOpt("note", note);
+                MParams.AddOpt("note", note);
                 return this;
             }
-            public CreateRequest TrackingId(string trackingId) 
+
+            public CreateRequest TrackingId(string trackingId)
             {
-                m_params.AddOpt("tracking_id", trackingId);
+                MParams.AddOpt("tracking_id", trackingId);
                 return this;
             }
-            public CreateRequest BatchId(string batchId) 
+
+            public CreateRequest BatchId(string batchId)
             {
-                m_params.AddOpt("batch_id", batchId);
+                MParams.AddOpt("batch_id", batchId);
                 return this;
             }
         }
-        public class UpdateRequest : EntityRequest<UpdateRequest> 
+
+        public class UpdateRequest : EntityRequest<UpdateRequest>
         {
-            public UpdateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public UpdateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public UpdateRequest ReferenceId(string referenceId) 
+            public UpdateRequest ReferenceId(string referenceId)
             {
-                m_params.AddOpt("reference_id", referenceId);
+                MParams.AddOpt("reference_id", referenceId);
                 return this;
             }
-            public UpdateRequest BatchId(string batchId) 
+
+            public UpdateRequest BatchId(string batchId)
             {
-                m_params.AddOpt("batch_id", batchId);
+                MParams.AddOpt("batch_id", batchId);
                 return this;
             }
-            public UpdateRequest Note(string note) 
+
+            public UpdateRequest Note(string note)
             {
-                m_params.AddOpt("note", note);
+                MParams.AddOpt("note", note);
                 return this;
             }
-            public UpdateRequest ShippingDate(long shippingDate) 
+
+            public UpdateRequest ShippingDate(long shippingDate)
             {
-                m_params.AddOpt("shipping_date", shippingDate);
+                MParams.AddOpt("shipping_date", shippingDate);
                 return this;
             }
-            public UpdateRequest OrderDate(long orderDate) 
+
+            public UpdateRequest OrderDate(long orderDate)
             {
-                m_params.AddOpt("order_date", orderDate);
+                MParams.AddOpt("order_date", orderDate);
                 return this;
             }
-            public UpdateRequest CancelledAt(long cancelledAt) 
+
+            public UpdateRequest CancelledAt(long cancelledAt)
             {
-                m_params.AddOpt("cancelled_at", cancelledAt);
+                MParams.AddOpt("cancelled_at", cancelledAt);
                 return this;
             }
-            public UpdateRequest CancellationReason(Order.CancellationReasonEnum cancellationReason) 
+
+            public UpdateRequest CancellationReason(CancellationReasonEnum cancellationReason)
             {
-                m_params.AddOpt("cancellation_reason", cancellationReason);
+                MParams.AddOpt("cancellation_reason", cancellationReason);
                 return this;
             }
-            public UpdateRequest ShippedAt(long shippedAt) 
+
+            public UpdateRequest ShippedAt(long shippedAt)
             {
-                m_params.AddOpt("shipped_at", shippedAt);
+                MParams.AddOpt("shipped_at", shippedAt);
                 return this;
             }
-            public UpdateRequest DeliveredAt(long deliveredAt) 
+
+            public UpdateRequest DeliveredAt(long deliveredAt)
             {
-                m_params.AddOpt("delivered_at", deliveredAt);
+                MParams.AddOpt("delivered_at", deliveredAt);
                 return this;
             }
-            public UpdateRequest TrackingId(string trackingId) 
+
+            public UpdateRequest TrackingId(string trackingId)
             {
-                m_params.AddOpt("tracking_id", trackingId);
+                MParams.AddOpt("tracking_id", trackingId);
                 return this;
             }
-            public UpdateRequest ShipmentCarrier(string shipmentCarrier) 
+
+            public UpdateRequest ShipmentCarrier(string shipmentCarrier)
             {
-                m_params.AddOpt("shipment_carrier", shipmentCarrier);
+                MParams.AddOpt("shipment_carrier", shipmentCarrier);
                 return this;
             }
-            public UpdateRequest FulfillmentStatus(string fulfillmentStatus) 
+
+            public UpdateRequest FulfillmentStatus(string fulfillmentStatus)
             {
-                m_params.AddOpt("fulfillment_status", fulfillmentStatus);
+                MParams.AddOpt("fulfillment_status", fulfillmentStatus);
                 return this;
             }
-            public UpdateRequest Status(Order.StatusEnum status) 
+
+            public UpdateRequest Status(StatusEnum status)
             {
-                m_params.AddOpt("status", status);
+                MParams.AddOpt("status", status);
                 return this;
             }
-            public UpdateRequest ShippingAddressFirstName(string shippingAddressFirstName) 
+
+            public UpdateRequest ShippingAddressFirstName(string shippingAddressFirstName)
             {
-                m_params.AddOpt("shipping_address[first_name]", shippingAddressFirstName);
+                MParams.AddOpt("shipping_address[first_name]", shippingAddressFirstName);
                 return this;
             }
-            public UpdateRequest ShippingAddressLastName(string shippingAddressLastName) 
+
+            public UpdateRequest ShippingAddressLastName(string shippingAddressLastName)
             {
-                m_params.AddOpt("shipping_address[last_name]", shippingAddressLastName);
+                MParams.AddOpt("shipping_address[last_name]", shippingAddressLastName);
                 return this;
             }
-            public UpdateRequest ShippingAddressEmail(string shippingAddressEmail) 
+
+            public UpdateRequest ShippingAddressEmail(string shippingAddressEmail)
             {
-                m_params.AddOpt("shipping_address[email]", shippingAddressEmail);
+                MParams.AddOpt("shipping_address[email]", shippingAddressEmail);
                 return this;
             }
-            public UpdateRequest ShippingAddressCompany(string shippingAddressCompany) 
+
+            public UpdateRequest ShippingAddressCompany(string shippingAddressCompany)
             {
-                m_params.AddOpt("shipping_address[company]", shippingAddressCompany);
+                MParams.AddOpt("shipping_address[company]", shippingAddressCompany);
                 return this;
             }
-            public UpdateRequest ShippingAddressPhone(string shippingAddressPhone) 
+
+            public UpdateRequest ShippingAddressPhone(string shippingAddressPhone)
             {
-                m_params.AddOpt("shipping_address[phone]", shippingAddressPhone);
+                MParams.AddOpt("shipping_address[phone]", shippingAddressPhone);
                 return this;
             }
-            public UpdateRequest ShippingAddressLine1(string shippingAddressLine1) 
+
+            public UpdateRequest ShippingAddressLine1(string shippingAddressLine1)
             {
-                m_params.AddOpt("shipping_address[line1]", shippingAddressLine1);
+                MParams.AddOpt("shipping_address[line1]", shippingAddressLine1);
                 return this;
             }
-            public UpdateRequest ShippingAddressLine2(string shippingAddressLine2) 
+
+            public UpdateRequest ShippingAddressLine2(string shippingAddressLine2)
             {
-                m_params.AddOpt("shipping_address[line2]", shippingAddressLine2);
+                MParams.AddOpt("shipping_address[line2]", shippingAddressLine2);
                 return this;
             }
-            public UpdateRequest ShippingAddressLine3(string shippingAddressLine3) 
+
+            public UpdateRequest ShippingAddressLine3(string shippingAddressLine3)
             {
-                m_params.AddOpt("shipping_address[line3]", shippingAddressLine3);
+                MParams.AddOpt("shipping_address[line3]", shippingAddressLine3);
                 return this;
             }
-            public UpdateRequest ShippingAddressCity(string shippingAddressCity) 
+
+            public UpdateRequest ShippingAddressCity(string shippingAddressCity)
             {
-                m_params.AddOpt("shipping_address[city]", shippingAddressCity);
+                MParams.AddOpt("shipping_address[city]", shippingAddressCity);
                 return this;
             }
-            public UpdateRequest ShippingAddressStateCode(string shippingAddressStateCode) 
+
+            public UpdateRequest ShippingAddressStateCode(string shippingAddressStateCode)
             {
-                m_params.AddOpt("shipping_address[state_code]", shippingAddressStateCode);
+                MParams.AddOpt("shipping_address[state_code]", shippingAddressStateCode);
                 return this;
             }
-            public UpdateRequest ShippingAddressState(string shippingAddressState) 
+
+            public UpdateRequest ShippingAddressState(string shippingAddressState)
             {
-                m_params.AddOpt("shipping_address[state]", shippingAddressState);
+                MParams.AddOpt("shipping_address[state]", shippingAddressState);
                 return this;
             }
-            public UpdateRequest ShippingAddressZip(string shippingAddressZip) 
+
+            public UpdateRequest ShippingAddressZip(string shippingAddressZip)
             {
-                m_params.AddOpt("shipping_address[zip]", shippingAddressZip);
+                MParams.AddOpt("shipping_address[zip]", shippingAddressZip);
                 return this;
             }
-            public UpdateRequest ShippingAddressCountry(string shippingAddressCountry) 
+
+            public UpdateRequest ShippingAddressCountry(string shippingAddressCountry)
             {
-                m_params.AddOpt("shipping_address[country]", shippingAddressCountry);
+                MParams.AddOpt("shipping_address[country]", shippingAddressCountry);
                 return this;
             }
-            public UpdateRequest ShippingAddressValidationStatus(ChargeBee.Models.Enums.ValidationStatusEnum shippingAddressValidationStatus) 
+
+            public UpdateRequest ShippingAddressValidationStatus(ValidationStatusEnum shippingAddressValidationStatus)
             {
-                m_params.AddOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
+                MParams.AddOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
                 return this;
             }
-            public UpdateRequest OrderLineItemId(int index, string orderLineItemId) 
+
+            public UpdateRequest OrderLineItemId(int index, string orderLineItemId)
             {
-                m_params.AddOpt("order_line_items[id][" + index + "]", orderLineItemId);
+                MParams.AddOpt("order_line_items[id][" + index + "]", orderLineItemId);
                 return this;
             }
-            public UpdateRequest OrderLineItemStatus(int index, OrderOrderLineItem.StatusEnum orderLineItemStatus) 
+
+            public UpdateRequest OrderLineItemStatus(int index, OrderOrderLineItem.StatusEnum orderLineItemStatus)
             {
-                m_params.AddOpt("order_line_items[status][" + index + "]", orderLineItemStatus);
+                MParams.AddOpt("order_line_items[status][" + index + "]", orderLineItemStatus);
                 return this;
             }
-            public UpdateRequest OrderLineItemSku(int index, string orderLineItemSku) 
+
+            public UpdateRequest OrderLineItemSku(int index, string orderLineItemSku)
             {
-                m_params.AddOpt("order_line_items[sku][" + index + "]", orderLineItemSku);
+                MParams.AddOpt("order_line_items[sku][" + index + "]", orderLineItemSku);
                 return this;
             }
         }
-        public class ImportOrderRequest : EntityRequest<ImportOrderRequest> 
+
+        public class ImportOrderRequest : EntityRequest<ImportOrderRequest>
         {
-            public ImportOrderRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public ImportOrderRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public ImportOrderRequest Id(string id) 
+            public ImportOrderRequest Id(string id)
             {
-                m_params.AddOpt("id", id);
+                MParams.AddOpt("id", id);
                 return this;
             }
-            public ImportOrderRequest DocumentNumber(string documentNumber) 
+
+            public ImportOrderRequest DocumentNumber(string documentNumber)
             {
-                m_params.AddOpt("document_number", documentNumber);
+                MParams.AddOpt("document_number", documentNumber);
                 return this;
             }
-            public ImportOrderRequest InvoiceId(string invoiceId) 
+
+            public ImportOrderRequest InvoiceId(string invoiceId)
             {
-                m_params.Add("invoice_id", invoiceId);
+                MParams.Add("invoice_id", invoiceId);
                 return this;
             }
-            public ImportOrderRequest Status(Order.StatusEnum status) 
+
+            public ImportOrderRequest Status(StatusEnum status)
             {
-                m_params.Add("status", status);
+                MParams.Add("status", status);
                 return this;
             }
-            public ImportOrderRequest SubscriptionId(string subscriptionId) 
+
+            public ImportOrderRequest SubscriptionId(string subscriptionId)
             {
-                m_params.AddOpt("subscription_id", subscriptionId);
+                MParams.AddOpt("subscription_id", subscriptionId);
                 return this;
             }
-            public ImportOrderRequest CustomerId(string customerId) 
+
+            public ImportOrderRequest CustomerId(string customerId)
             {
-                m_params.AddOpt("customer_id", customerId);
+                MParams.AddOpt("customer_id", customerId);
                 return this;
             }
-            public ImportOrderRequest CreatedAt(long createdAt) 
+
+            public ImportOrderRequest CreatedAt(long createdAt)
             {
-                m_params.Add("created_at", createdAt);
+                MParams.Add("created_at", createdAt);
                 return this;
             }
-            public ImportOrderRequest OrderDate(long orderDate) 
+
+            public ImportOrderRequest OrderDate(long orderDate)
             {
-                m_params.Add("order_date", orderDate);
+                MParams.Add("order_date", orderDate);
                 return this;
             }
-            public ImportOrderRequest ShippingDate(long shippingDate) 
+
+            public ImportOrderRequest ShippingDate(long shippingDate)
             {
-                m_params.Add("shipping_date", shippingDate);
+                MParams.Add("shipping_date", shippingDate);
                 return this;
             }
-            public ImportOrderRequest ReferenceId(string referenceId) 
+
+            public ImportOrderRequest ReferenceId(string referenceId)
             {
-                m_params.AddOpt("reference_id", referenceId);
+                MParams.AddOpt("reference_id", referenceId);
                 return this;
             }
-            public ImportOrderRequest FulfillmentStatus(string fulfillmentStatus) 
+
+            public ImportOrderRequest FulfillmentStatus(string fulfillmentStatus)
             {
-                m_params.AddOpt("fulfillment_status", fulfillmentStatus);
+                MParams.AddOpt("fulfillment_status", fulfillmentStatus);
                 return this;
             }
-            public ImportOrderRequest Note(string note) 
+
+            public ImportOrderRequest Note(string note)
             {
-                m_params.AddOpt("note", note);
+                MParams.AddOpt("note", note);
                 return this;
             }
-            public ImportOrderRequest TrackingId(string trackingId) 
+
+            public ImportOrderRequest TrackingId(string trackingId)
             {
-                m_params.AddOpt("tracking_id", trackingId);
+                MParams.AddOpt("tracking_id", trackingId);
                 return this;
             }
-            public ImportOrderRequest BatchId(string batchId) 
+
+            public ImportOrderRequest BatchId(string batchId)
             {
-                m_params.AddOpt("batch_id", batchId);
+                MParams.AddOpt("batch_id", batchId);
                 return this;
             }
-            public ImportOrderRequest ShipmentCarrier(string shipmentCarrier) 
+
+            public ImportOrderRequest ShipmentCarrier(string shipmentCarrier)
             {
-                m_params.AddOpt("shipment_carrier", shipmentCarrier);
+                MParams.AddOpt("shipment_carrier", shipmentCarrier);
                 return this;
             }
-            public ImportOrderRequest ShippingCutOffDate(long shippingCutOffDate) 
+
+            public ImportOrderRequest ShippingCutOffDate(long shippingCutOffDate)
             {
-                m_params.AddOpt("shipping_cut_off_date", shippingCutOffDate);
+                MParams.AddOpt("shipping_cut_off_date", shippingCutOffDate);
                 return this;
             }
-            public ImportOrderRequest DeliveredAt(long deliveredAt) 
+
+            public ImportOrderRequest DeliveredAt(long deliveredAt)
             {
-                m_params.AddOpt("delivered_at", deliveredAt);
+                MParams.AddOpt("delivered_at", deliveredAt);
                 return this;
             }
-            public ImportOrderRequest ShippedAt(long shippedAt) 
+
+            public ImportOrderRequest ShippedAt(long shippedAt)
             {
-                m_params.AddOpt("shipped_at", shippedAt);
+                MParams.AddOpt("shipped_at", shippedAt);
                 return this;
             }
-            public ImportOrderRequest CancelledAt(long cancelledAt) 
+
+            public ImportOrderRequest CancelledAt(long cancelledAt)
             {
-                m_params.AddOpt("cancelled_at", cancelledAt);
+                MParams.AddOpt("cancelled_at", cancelledAt);
                 return this;
             }
-            public ImportOrderRequest CancellationReason(Order.CancellationReasonEnum cancellationReason) 
+
+            public ImportOrderRequest CancellationReason(CancellationReasonEnum cancellationReason)
             {
-                m_params.AddOpt("cancellation_reason", cancellationReason);
+                MParams.AddOpt("cancellation_reason", cancellationReason);
                 return this;
             }
-            public ImportOrderRequest RefundableCreditsIssued(int refundableCreditsIssued) 
+
+            public ImportOrderRequest RefundableCreditsIssued(int refundableCreditsIssued)
             {
-                m_params.AddOpt("refundable_credits_issued", refundableCreditsIssued);
+                MParams.AddOpt("refundable_credits_issued", refundableCreditsIssued);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressFirstName(string shippingAddressFirstName) 
+
+            public ImportOrderRequest ShippingAddressFirstName(string shippingAddressFirstName)
             {
-                m_params.AddOpt("shipping_address[first_name]", shippingAddressFirstName);
+                MParams.AddOpt("shipping_address[first_name]", shippingAddressFirstName);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressLastName(string shippingAddressLastName) 
+
+            public ImportOrderRequest ShippingAddressLastName(string shippingAddressLastName)
             {
-                m_params.AddOpt("shipping_address[last_name]", shippingAddressLastName);
+                MParams.AddOpt("shipping_address[last_name]", shippingAddressLastName);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressEmail(string shippingAddressEmail) 
+
+            public ImportOrderRequest ShippingAddressEmail(string shippingAddressEmail)
             {
-                m_params.AddOpt("shipping_address[email]", shippingAddressEmail);
+                MParams.AddOpt("shipping_address[email]", shippingAddressEmail);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressCompany(string shippingAddressCompany) 
+
+            public ImportOrderRequest ShippingAddressCompany(string shippingAddressCompany)
             {
-                m_params.AddOpt("shipping_address[company]", shippingAddressCompany);
+                MParams.AddOpt("shipping_address[company]", shippingAddressCompany);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressPhone(string shippingAddressPhone) 
+
+            public ImportOrderRequest ShippingAddressPhone(string shippingAddressPhone)
             {
-                m_params.AddOpt("shipping_address[phone]", shippingAddressPhone);
+                MParams.AddOpt("shipping_address[phone]", shippingAddressPhone);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressLine1(string shippingAddressLine1) 
+
+            public ImportOrderRequest ShippingAddressLine1(string shippingAddressLine1)
             {
-                m_params.AddOpt("shipping_address[line1]", shippingAddressLine1);
+                MParams.AddOpt("shipping_address[line1]", shippingAddressLine1);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressLine2(string shippingAddressLine2) 
+
+            public ImportOrderRequest ShippingAddressLine2(string shippingAddressLine2)
             {
-                m_params.AddOpt("shipping_address[line2]", shippingAddressLine2);
+                MParams.AddOpt("shipping_address[line2]", shippingAddressLine2);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressLine3(string shippingAddressLine3) 
+
+            public ImportOrderRequest ShippingAddressLine3(string shippingAddressLine3)
             {
-                m_params.AddOpt("shipping_address[line3]", shippingAddressLine3);
+                MParams.AddOpt("shipping_address[line3]", shippingAddressLine3);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressCity(string shippingAddressCity) 
+
+            public ImportOrderRequest ShippingAddressCity(string shippingAddressCity)
             {
-                m_params.AddOpt("shipping_address[city]", shippingAddressCity);
+                MParams.AddOpt("shipping_address[city]", shippingAddressCity);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressStateCode(string shippingAddressStateCode) 
+
+            public ImportOrderRequest ShippingAddressStateCode(string shippingAddressStateCode)
             {
-                m_params.AddOpt("shipping_address[state_code]", shippingAddressStateCode);
+                MParams.AddOpt("shipping_address[state_code]", shippingAddressStateCode);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressState(string shippingAddressState) 
+
+            public ImportOrderRequest ShippingAddressState(string shippingAddressState)
             {
-                m_params.AddOpt("shipping_address[state]", shippingAddressState);
+                MParams.AddOpt("shipping_address[state]", shippingAddressState);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressZip(string shippingAddressZip) 
+
+            public ImportOrderRequest ShippingAddressZip(string shippingAddressZip)
             {
-                m_params.AddOpt("shipping_address[zip]", shippingAddressZip);
+                MParams.AddOpt("shipping_address[zip]", shippingAddressZip);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressCountry(string shippingAddressCountry) 
+
+            public ImportOrderRequest ShippingAddressCountry(string shippingAddressCountry)
             {
-                m_params.AddOpt("shipping_address[country]", shippingAddressCountry);
+                MParams.AddOpt("shipping_address[country]", shippingAddressCountry);
                 return this;
             }
-            public ImportOrderRequest ShippingAddressValidationStatus(ChargeBee.Models.Enums.ValidationStatusEnum shippingAddressValidationStatus) 
+
+            public ImportOrderRequest ShippingAddressValidationStatus(
+                ValidationStatusEnum shippingAddressValidationStatus)
             {
-                m_params.AddOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
+                MParams.AddOpt("shipping_address[validation_status]", shippingAddressValidationStatus);
                 return this;
             }
-            public ImportOrderRequest BillingAddressFirstName(string billingAddressFirstName) 
+
+            public ImportOrderRequest BillingAddressFirstName(string billingAddressFirstName)
             {
-                m_params.AddOpt("billing_address[first_name]", billingAddressFirstName);
+                MParams.AddOpt("billing_address[first_name]", billingAddressFirstName);
                 return this;
             }
-            public ImportOrderRequest BillingAddressLastName(string billingAddressLastName) 
+
+            public ImportOrderRequest BillingAddressLastName(string billingAddressLastName)
             {
-                m_params.AddOpt("billing_address[last_name]", billingAddressLastName);
+                MParams.AddOpt("billing_address[last_name]", billingAddressLastName);
                 return this;
             }
-            public ImportOrderRequest BillingAddressEmail(string billingAddressEmail) 
+
+            public ImportOrderRequest BillingAddressEmail(string billingAddressEmail)
             {
-                m_params.AddOpt("billing_address[email]", billingAddressEmail);
+                MParams.AddOpt("billing_address[email]", billingAddressEmail);
                 return this;
             }
-            public ImportOrderRequest BillingAddressCompany(string billingAddressCompany) 
+
+            public ImportOrderRequest BillingAddressCompany(string billingAddressCompany)
             {
-                m_params.AddOpt("billing_address[company]", billingAddressCompany);
+                MParams.AddOpt("billing_address[company]", billingAddressCompany);
                 return this;
             }
-            public ImportOrderRequest BillingAddressPhone(string billingAddressPhone) 
+
+            public ImportOrderRequest BillingAddressPhone(string billingAddressPhone)
             {
-                m_params.AddOpt("billing_address[phone]", billingAddressPhone);
+                MParams.AddOpt("billing_address[phone]", billingAddressPhone);
                 return this;
             }
-            public ImportOrderRequest BillingAddressLine1(string billingAddressLine1) 
+
+            public ImportOrderRequest BillingAddressLine1(string billingAddressLine1)
             {
-                m_params.AddOpt("billing_address[line1]", billingAddressLine1);
+                MParams.AddOpt("billing_address[line1]", billingAddressLine1);
                 return this;
             }
-            public ImportOrderRequest BillingAddressLine2(string billingAddressLine2) 
+
+            public ImportOrderRequest BillingAddressLine2(string billingAddressLine2)
             {
-                m_params.AddOpt("billing_address[line2]", billingAddressLine2);
+                MParams.AddOpt("billing_address[line2]", billingAddressLine2);
                 return this;
             }
-            public ImportOrderRequest BillingAddressLine3(string billingAddressLine3) 
+
+            public ImportOrderRequest BillingAddressLine3(string billingAddressLine3)
             {
-                m_params.AddOpt("billing_address[line3]", billingAddressLine3);
+                MParams.AddOpt("billing_address[line3]", billingAddressLine3);
                 return this;
             }
-            public ImportOrderRequest BillingAddressCity(string billingAddressCity) 
+
+            public ImportOrderRequest BillingAddressCity(string billingAddressCity)
             {
-                m_params.AddOpt("billing_address[city]", billingAddressCity);
+                MParams.AddOpt("billing_address[city]", billingAddressCity);
                 return this;
             }
-            public ImportOrderRequest BillingAddressStateCode(string billingAddressStateCode) 
+
+            public ImportOrderRequest BillingAddressStateCode(string billingAddressStateCode)
             {
-                m_params.AddOpt("billing_address[state_code]", billingAddressStateCode);
+                MParams.AddOpt("billing_address[state_code]", billingAddressStateCode);
                 return this;
             }
-            public ImportOrderRequest BillingAddressState(string billingAddressState) 
+
+            public ImportOrderRequest BillingAddressState(string billingAddressState)
             {
-                m_params.AddOpt("billing_address[state]", billingAddressState);
+                MParams.AddOpt("billing_address[state]", billingAddressState);
                 return this;
             }
-            public ImportOrderRequest BillingAddressZip(string billingAddressZip) 
+
+            public ImportOrderRequest BillingAddressZip(string billingAddressZip)
             {
-                m_params.AddOpt("billing_address[zip]", billingAddressZip);
+                MParams.AddOpt("billing_address[zip]", billingAddressZip);
                 return this;
             }
-            public ImportOrderRequest BillingAddressCountry(string billingAddressCountry) 
+
+            public ImportOrderRequest BillingAddressCountry(string billingAddressCountry)
             {
-                m_params.AddOpt("billing_address[country]", billingAddressCountry);
+                MParams.AddOpt("billing_address[country]", billingAddressCountry);
                 return this;
             }
-            public ImportOrderRequest BillingAddressValidationStatus(ChargeBee.Models.Enums.ValidationStatusEnum billingAddressValidationStatus) 
+
+            public ImportOrderRequest BillingAddressValidationStatus(
+                ValidationStatusEnum billingAddressValidationStatus)
             {
-                m_params.AddOpt("billing_address[validation_status]", billingAddressValidationStatus);
+                MParams.AddOpt("billing_address[validation_status]", billingAddressValidationStatus);
                 return this;
             }
         }
-        public class CancelRequest : EntityRequest<CancelRequest> 
+
+        public class CancelRequest : EntityRequest<CancelRequest>
         {
-            public CancelRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CancelRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CancelRequest CancellationReason(Order.CancellationReasonEnum cancellationReason) 
+            public CancelRequest CancellationReason(CancellationReasonEnum cancellationReason)
             {
-                m_params.Add("cancellation_reason", cancellationReason);
+                MParams.Add("cancellation_reason", cancellationReason);
                 return this;
             }
-            public CancelRequest CustomerNotes(string customerNotes) 
+
+            public CancelRequest CustomerNotes(string customerNotes)
             {
-                m_params.AddOpt("customer_notes", customerNotes);
+                MParams.AddOpt("customer_notes", customerNotes);
                 return this;
             }
-            public CancelRequest CancelledAt(long cancelledAt) 
+
+            public CancelRequest CancelledAt(long cancelledAt)
             {
-                m_params.AddOpt("cancelled_at", cancelledAt);
+                MParams.AddOpt("cancelled_at", cancelledAt);
                 return this;
             }
-            public CancelRequest CreditNoteTotal(int creditNoteTotal) 
+
+            public CancelRequest CreditNoteTotal(int creditNoteTotal)
             {
-                m_params.AddOpt("credit_note[total]", creditNoteTotal);
+                MParams.AddOpt("credit_note[total]", creditNoteTotal);
                 return this;
             }
         }
-        public class CreateRefundableCreditNoteRequest : EntityRequest<CreateRefundableCreditNoteRequest> 
+
+        public class CreateRefundableCreditNoteRequest : EntityRequest<CreateRefundableCreditNoteRequest>
         {
-            public CreateRefundableCreditNoteRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CreateRefundableCreditNoteRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CreateRefundableCreditNoteRequest CustomerNotes(string customerNotes) 
+            public CreateRefundableCreditNoteRequest CustomerNotes(string customerNotes)
             {
-                m_params.AddOpt("customer_notes", customerNotes);
+                MParams.AddOpt("customer_notes", customerNotes);
                 return this;
             }
-            public CreateRefundableCreditNoteRequest CreditNoteReasonCode(CreditNote.ReasonCodeEnum creditNoteReasonCode) 
+
+            public CreateRefundableCreditNoteRequest CreditNoteReasonCode(
+                CreditNote.ReasonCodeEnum creditNoteReasonCode)
             {
-                m_params.Add("credit_note[reason_code]", creditNoteReasonCode);
+                MParams.Add("credit_note[reason_code]", creditNoteReasonCode);
                 return this;
             }
-            public CreateRefundableCreditNoteRequest CreditNoteTotal(int creditNoteTotal) 
+
+            public CreateRefundableCreditNoteRequest CreditNoteTotal(int creditNoteTotal)
             {
-                m_params.Add("credit_note[total]", creditNoteTotal);
+                MParams.Add("credit_note[total]", creditNoteTotal);
                 return this;
             }
         }
-        public class ReopenRequest : EntityRequest<ReopenRequest> 
+
+        public class ReopenRequest : EntityRequest<ReopenRequest>
         {
-            public ReopenRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public ReopenRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public ReopenRequest VoidCancellationCreditNotes(bool voidCancellationCreditNotes) 
+            public ReopenRequest VoidCancellationCreditNotes(bool voidCancellationCreditNotes)
             {
-                m_params.AddOpt("void_cancellation_credit_notes", voidCancellationCreditNotes);
+                MParams.AddOpt("void_cancellation_credit_notes", voidCancellationCreditNotes);
                 return this;
             }
         }
-        public class OrderListRequest : ListRequestBase<OrderListRequest> 
+
+        public class OrderListRequest : ListRequestBase<OrderListRequest>
         {
-            public OrderListRequest(string url) 
-                    : base(url)
+            public OrderListRequest(string url)
+                : base(url)
             {
             }
 
-            public OrderListRequest IncludeDeleted(bool includeDeleted) 
+            public OrderListRequest IncludeDeleted(bool includeDeleted)
             {
-                m_params.AddOpt("include_deleted", includeDeleted);
+                MParams.AddOpt("include_deleted", includeDeleted);
                 return this;
             }
-            public OrderListRequest ExcludeDeletedCreditNotes(bool excludeDeletedCreditNotes) 
+
+            public OrderListRequest ExcludeDeletedCreditNotes(bool excludeDeletedCreditNotes)
             {
-                m_params.AddOpt("exclude_deleted_credit_notes", excludeDeletedCreditNotes);
+                MParams.AddOpt("exclude_deleted_credit_notes", excludeDeletedCreditNotes);
                 return this;
             }
-            public StringFilter<OrderListRequest> Id() 
+
+            public StringFilter<OrderListRequest> Id()
             {
-                return new StringFilter<OrderListRequest>("id", this).SupportsMultiOperators(true);        
+                return new StringFilter<OrderListRequest>("id", this).SupportsMultiOperators(true);
             }
-            public StringFilter<OrderListRequest> InvoiceId() 
+
+            public StringFilter<OrderListRequest> InvoiceId()
             {
-                return new StringFilter<OrderListRequest>("invoice_id", this).SupportsMultiOperators(true);        
+                return new StringFilter<OrderListRequest>("invoice_id", this).SupportsMultiOperators(true);
             }
-            public StringFilter<OrderListRequest> SubscriptionId() 
+
+            public StringFilter<OrderListRequest> SubscriptionId()
             {
-                return new StringFilter<OrderListRequest>("subscription_id", this);        
+                return new("subscription_id", this);
             }
-            public EnumFilter<Order.StatusEnum, OrderListRequest> Status() 
+
+            public EnumFilter<StatusEnum, OrderListRequest> Status()
             {
-                return new EnumFilter<Order.StatusEnum, OrderListRequest>("status", this);        
+                return new("status", this);
             }
-            public TimestampFilter<OrderListRequest> ShippingDate() 
+
+            public TimestampFilter<OrderListRequest> ShippingDate()
             {
-                return new TimestampFilter<OrderListRequest>("shipping_date", this);        
+                return new("shipping_date", this);
             }
-            public EnumFilter<Order.OrderTypeEnum, OrderListRequest> OrderType() 
+
+            public EnumFilter<OrderTypeEnum, OrderListRequest> OrderType()
             {
-                return new EnumFilter<Order.OrderTypeEnum, OrderListRequest>("order_type", this);        
+                return new("order_type", this);
             }
-            public TimestampFilter<OrderListRequest> OrderDate() 
+
+            public TimestampFilter<OrderListRequest> OrderDate()
             {
-                return new TimestampFilter<OrderListRequest>("order_date", this);        
+                return new("order_date", this);
             }
-            public TimestampFilter<OrderListRequest> PaidOn() 
+
+            public TimestampFilter<OrderListRequest> PaidOn()
             {
-                return new TimestampFilter<OrderListRequest>("paid_on", this);        
+                return new("paid_on", this);
             }
-            public TimestampFilter<OrderListRequest> UpdatedAt() 
+
+            public TimestampFilter<OrderListRequest> UpdatedAt()
             {
-                return new TimestampFilter<OrderListRequest>("updated_at", this);        
+                return new("updated_at", this);
             }
-            public TimestampFilter<OrderListRequest> CreatedAt() 
+
+            public TimestampFilter<OrderListRequest> CreatedAt()
             {
-                return new TimestampFilter<OrderListRequest>("created_at", this);        
+                return new("created_at", this);
             }
-            public OrderListRequest SortByCreatedAt(SortOrderEnum order) {
-                m_params.AddOpt("sort_by["+order.ToString().ToLower()+"]","created_at");
+
+            public OrderListRequest SortByCreatedAt(SortOrderEnum order)
+            {
+                MParams.AddOpt("sort_by[" + order.ToString().ToLower() + "]", "created_at");
                 return this;
             }
-            public OrderListRequest SortByUpdatedAt(SortOrderEnum order) {
-                m_params.AddOpt("sort_by["+order.ToString().ToLower()+"]","updated_at");
+
+            public OrderListRequest SortByUpdatedAt(SortOrderEnum order)
+            {
+                MParams.AddOpt("sort_by[" + order.ToString().ToLower() + "]", "updated_at");
                 return this;
             }
         }
+
         #endregion
-
-        public enum StatusEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "new")]
-            New,
-            [EnumMember(Value = "processing")]
-            Processing,
-            [EnumMember(Value = "complete")]
-            Complete,
-            [EnumMember(Value = "cancelled")]
-            Cancelled,
-            [EnumMember(Value = "voided")]
-            Voided,
-            [EnumMember(Value = "queued")]
-            Queued,
-            [EnumMember(Value = "awaiting_shipment")]
-            AwaitingShipment,
-            [EnumMember(Value = "on_hold")]
-            OnHold,
-            [EnumMember(Value = "delivered")]
-            Delivered,
-            [EnumMember(Value = "shipped")]
-            Shipped,
-            [EnumMember(Value = "partially_delivered")]
-            PartiallyDelivered,
-            [EnumMember(Value = "returned")]
-            Returned,
-
-        }
-        public enum CancellationReasonEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "shipping_cut_off_passed")]
-            ShippingCutOffPassed,
-            [EnumMember(Value = "product_unsatisfactory")]
-            ProductUnsatisfactory,
-            [EnumMember(Value = "third_party_cancellation")]
-            ThirdPartyCancellation,
-            [EnumMember(Value = "product_not_required")]
-            ProductNotRequired,
-            [EnumMember(Value = "delivery_date_missed")]
-            DeliveryDateMissed,
-            [EnumMember(Value = "alternative_found")]
-            AlternativeFound,
-            [EnumMember(Value = "invoice_written_off")]
-            InvoiceWrittenOff,
-            [EnumMember(Value = "invoice_voided")]
-            InvoiceVoided,
-            [EnumMember(Value = "fraudulent_transaction")]
-            FraudulentTransaction,
-            [EnumMember(Value = "payment_declined")]
-            PaymentDeclined,
-            [EnumMember(Value = "subscription_cancelled")]
-            SubscriptionCancelled,
-            [EnumMember(Value = "product_not_available")]
-            ProductNotAvailable,
-            [EnumMember(Value = "others")]
-            Others,
-
-        }
-        public enum PaymentStatusEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "not_paid")]
-            NotPaid,
-            [EnumMember(Value = "paid")]
-            Paid,
-
-        }
-        public enum OrderTypeEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "manual")]
-            Manual,
-            [EnumMember(Value = "system_generated")]
-            SystemGenerated,
-
-        }
 
         #region Subclasses
+
         public class OrderOrderLineItem : Resource
         {
-            public enum StatusEnum
-            {
-                UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-                dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "queued")]
-                Queued,
-                [EnumMember(Value = "awaiting_shipment")]
-                AwaitingShipment,
-                [EnumMember(Value = "on_hold")]
-                OnHold,
-                [EnumMember(Value = "delivered")]
-                Delivered,
-                [EnumMember(Value = "shipped")]
-                Shipped,
-                [EnumMember(Value = "partially_delivered")]
-                PartiallyDelivered,
-                [EnumMember(Value = "returned")]
-                Returned,
-                [EnumMember(Value = "cancelled")]
-                Cancelled,
-            }
             public enum EntityTypeEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "plan_setup")]
-                PlanSetup,
-                [EnumMember(Value = "plan")]
-                Plan,
-                [EnumMember(Value = "addon")]
-                Addon,
-                [EnumMember(Value = "adhoc")]
-                Adhoc,
+                [EnumMember(Value = "plan_setup")] PlanSetup,
+                [EnumMember(Value = "plan")] Plan,
+                [EnumMember(Value = "addon")] Addon,
+                [EnumMember(Value = "adhoc")] Adhoc
             }
 
-            public string Id() {
-                return GetValue<string>("id", true);
+            public enum StatusEnum
+            {
+                UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+                dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+                [EnumMember(Value = "queued")] Queued,
+
+                [EnumMember(Value = "awaiting_shipment")]
+                AwaitingShipment,
+                [EnumMember(Value = "on_hold")] OnHold,
+                [EnumMember(Value = "delivered")] Delivered,
+                [EnumMember(Value = "shipped")] Shipped,
+
+                [EnumMember(Value = "partially_delivered")]
+                PartiallyDelivered,
+                [EnumMember(Value = "returned")] Returned,
+                [EnumMember(Value = "cancelled")] Cancelled
             }
 
-            public string InvoiceId() {
-                return GetValue<string>("invoice_id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
 
-            public string InvoiceLineItemId() {
-                return GetValue<string>("invoice_line_item_id", true);
+            public string InvoiceId()
+            {
+                return GetValue<string>("invoice_id");
             }
 
-            public int? UnitPrice() {
+            public string InvoiceLineItemId()
+            {
+                return GetValue<string>("invoice_line_item_id");
+            }
+
+            public int? UnitPrice()
+            {
                 return GetValue<int?>("unit_price", false);
             }
 
-            public string Description() {
+            public string Description()
+            {
                 return GetValue<string>("description", false);
             }
 
-            public int? Amount() {
+            public int? Amount()
+            {
                 return GetValue<int?>("amount", false);
             }
 
-            public int? FulfillmentQuantity() {
+            public int? FulfillmentQuantity()
+            {
                 return GetValue<int?>("fulfillment_quantity", false);
             }
 
-            public int? FulfillmentAmount() {
+            public int? FulfillmentAmount()
+            {
                 return GetValue<int?>("fulfillment_amount", false);
             }
 
-            public int? TaxAmount() {
+            public int? TaxAmount()
+            {
                 return GetValue<int?>("tax_amount", false);
             }
 
-            public int? AmountPaid() {
+            public int? AmountPaid()
+            {
                 return GetValue<int?>("amount_paid", false);
             }
 
-            public int? AmountAdjusted() {
+            public int? AmountAdjusted()
+            {
                 return GetValue<int?>("amount_adjusted", false);
             }
 
-            public int? RefundableCreditsIssued() {
+            public int? RefundableCreditsIssued()
+            {
                 return GetValue<int?>("refundable_credits_issued", false);
             }
 
-            public int? RefundableCredits() {
+            public int? RefundableCredits()
+            {
                 return GetValue<int?>("refundable_credits", false);
             }
 
-            public bool IsShippable() {
-                return GetValue<bool>("is_shippable", true);
+            public bool IsShippable()
+            {
+                return GetValue<bool>("is_shippable");
             }
 
-            public string Sku() {
+            public string Sku()
+            {
                 return GetValue<string>("sku", false);
             }
 
-            public StatusEnum? Status() {
+            public StatusEnum? Status()
+            {
                 return GetEnum<StatusEnum>("status", false);
             }
 
-            public EntityTypeEnum EntityType() {
-                return GetEnum<EntityTypeEnum>("entity_type", true);
+            public EntityTypeEnum EntityType()
+            {
+                return GetEnum<EntityTypeEnum>("entity_type");
             }
 
-            public int? ItemLevelDiscountAmount() {
+            public int? ItemLevelDiscountAmount()
+            {
                 return GetValue<int?>("item_level_discount_amount", false);
             }
 
-            public int? DiscountAmount() {
+            public int? DiscountAmount()
+            {
                 return GetValue<int?>("discount_amount", false);
             }
 
-            public string EntityId() {
+            public string EntityId()
+            {
                 return GetValue<string>("entity_id", false);
             }
-
         }
+
         public class OrderShippingAddress : Resource
         {
-
-            public string FirstName() {
+            public string FirstName()
+            {
                 return GetValue<string>("first_name", false);
             }
 
-            public string LastName() {
+            public string LastName()
+            {
                 return GetValue<string>("last_name", false);
             }
 
-            public string Email() {
+            public string Email()
+            {
                 return GetValue<string>("email", false);
             }
 
-            public string Company() {
+            public string Company()
+            {
                 return GetValue<string>("company", false);
             }
 
-            public string Phone() {
+            public string Phone()
+            {
                 return GetValue<string>("phone", false);
             }
 
-            public string Line1() {
+            public string Line1()
+            {
                 return GetValue<string>("line1", false);
             }
 
-            public string Line2() {
+            public string Line2()
+            {
                 return GetValue<string>("line2", false);
             }
 
-            public string Line3() {
+            public string Line3()
+            {
                 return GetValue<string>("line3", false);
             }
 
-            public string City() {
+            public string City()
+            {
                 return GetValue<string>("city", false);
             }
 
-            public string StateCode() {
+            public string StateCode()
+            {
                 return GetValue<string>("state_code", false);
             }
 
-            public string State() {
+            public string State()
+            {
                 return GetValue<string>("state", false);
             }
 
-            public string Country() {
+            public string Country()
+            {
                 return GetValue<string>("country", false);
             }
 
-            public string Zip() {
+            public string Zip()
+            {
                 return GetValue<string>("zip", false);
             }
 
-            public ValidationStatusEnum? ValidationStatus() {
+            public ValidationStatusEnum? ValidationStatus()
+            {
                 return GetEnum<ValidationStatusEnum>("validation_status", false);
             }
-
         }
+
         public class OrderBillingAddress : Resource
         {
-
-            public string FirstName() {
+            public string FirstName()
+            {
                 return GetValue<string>("first_name", false);
             }
 
-            public string LastName() {
+            public string LastName()
+            {
                 return GetValue<string>("last_name", false);
             }
 
-            public string Email() {
+            public string Email()
+            {
                 return GetValue<string>("email", false);
             }
 
-            public string Company() {
+            public string Company()
+            {
                 return GetValue<string>("company", false);
             }
 
-            public string Phone() {
+            public string Phone()
+            {
                 return GetValue<string>("phone", false);
             }
 
-            public string Line1() {
+            public string Line1()
+            {
                 return GetValue<string>("line1", false);
             }
 
-            public string Line2() {
+            public string Line2()
+            {
                 return GetValue<string>("line2", false);
             }
 
-            public string Line3() {
+            public string Line3()
+            {
                 return GetValue<string>("line3", false);
             }
 
-            public string City() {
+            public string City()
+            {
                 return GetValue<string>("city", false);
             }
 
-            public string StateCode() {
+            public string StateCode()
+            {
                 return GetValue<string>("state_code", false);
             }
 
-            public string State() {
+            public string State()
+            {
                 return GetValue<string>("state", false);
             }
 
-            public string Country() {
+            public string Country()
+            {
                 return GetValue<string>("country", false);
             }
 
-            public string Zip() {
+            public string Zip()
+            {
                 return GetValue<string>("zip", false);
             }
 
-            public ValidationStatusEnum? ValidationStatus() {
+            public ValidationStatusEnum? ValidationStatus()
+            {
                 return GetEnum<ValidationStatusEnum>("validation_status", false);
             }
-
         }
+
         public class OrderLineItemTax : Resource
         {
-
-            public string LineItemId() {
+            public string LineItemId()
+            {
                 return GetValue<string>("line_item_id", false);
             }
 
-            public string TaxName() {
-                return GetValue<string>("tax_name", true);
+            public string TaxName()
+            {
+                return GetValue<string>("tax_name");
             }
 
-            public double TaxRate() {
-                return GetValue<double>("tax_rate", true);
+            public double TaxRate()
+            {
+                return GetValue<double>("tax_rate");
             }
 
-            public bool? IsPartialTaxApplied() {
+            public bool? IsPartialTaxApplied()
+            {
                 return GetValue<bool?>("is_partial_tax_applied", false);
             }
 
-            public bool? IsNonComplianceTax() {
+            public bool? IsNonComplianceTax()
+            {
                 return GetValue<bool?>("is_non_compliance_tax", false);
             }
 
-            public int TaxableAmount() {
-                return GetValue<int>("taxable_amount", true);
+            public int TaxableAmount()
+            {
+                return GetValue<int>("taxable_amount");
             }
 
-            public int TaxAmount() {
-                return GetValue<int>("tax_amount", true);
+            public int TaxAmount()
+            {
+                return GetValue<int>("tax_amount");
             }
 
-            public TaxJurisTypeEnum? TaxJurisType() {
+            public TaxJurisTypeEnum? TaxJurisType()
+            {
                 return GetEnum<TaxJurisTypeEnum>("tax_juris_type", false);
             }
 
-            public string TaxJurisName() {
+            public string TaxJurisName()
+            {
                 return GetValue<string>("tax_juris_name", false);
             }
 
-            public string TaxJurisCode() {
+            public string TaxJurisCode()
+            {
                 return GetValue<string>("tax_juris_code", false);
             }
 
-            public int? TaxAmountInLocalCurrency() {
+            public int? TaxAmountInLocalCurrency()
+            {
                 return GetValue<int?>("tax_amount_in_local_currency", false);
             }
 
-            public string LocalCurrencyCode() {
+            public string LocalCurrencyCode()
+            {
                 return GetValue<string>("local_currency_code", false);
             }
-
         }
+
         public class OrderLineItemDiscount : Resource
         {
             public enum DiscountTypeEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+
                 [EnumMember(Value = "item_level_coupon")]
                 ItemLevelCoupon,
+
                 [EnumMember(Value = "document_level_coupon")]
                 DocumentLevelCoupon,
+
                 [EnumMember(Value = "promotional_credits")]
                 PromotionalCredits,
+
                 [EnumMember(Value = "prorated_credits")]
-                ProratedCredits,
+                ProratedCredits
             }
 
-            public string LineItemId() {
-                return GetValue<string>("line_item_id", true);
+            public string LineItemId()
+            {
+                return GetValue<string>("line_item_id");
             }
 
-            public DiscountTypeEnum DiscountType() {
-                return GetEnum<DiscountTypeEnum>("discount_type", true);
+            public DiscountTypeEnum DiscountType()
+            {
+                return GetEnum<DiscountTypeEnum>("discount_type");
             }
 
-            public string CouponId() {
+            public string CouponId()
+            {
                 return GetValue<string>("coupon_id", false);
             }
 
-            public int DiscountAmount() {
-                return GetValue<int>("discount_amount", true);
+            public int DiscountAmount()
+            {
+                return GetValue<int>("discount_amount");
             }
-
         }
+
         public class OrderLinkedCreditNote : Resource
         {
-            public enum TypeEnum
-            {
-                UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-                dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "adjustment")]
-                Adjustment,
-                [EnumMember(Value = "refundable")]
-                Refundable,
-            }
             public enum StatusEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "adjusted")]
-                Adjusted,
-                [EnumMember(Value = "refunded")]
-                Refunded,
-                [EnumMember(Value = "refund_due")]
-                RefundDue,
-                [EnumMember(Value = "voided")]
-                Voided,
+                [EnumMember(Value = "adjusted")] Adjusted,
+                [EnumMember(Value = "refunded")] Refunded,
+                [EnumMember(Value = "refund_due")] RefundDue,
+                [EnumMember(Value = "voided")] Voided
             }
 
-            public int? Amount() {
+            public enum TypeEnum
+            {
+                UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+                dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+                [EnumMember(Value = "adjustment")] Adjustment,
+                [EnumMember(Value = "refundable")] Refundable
+            }
+
+            public int? Amount()
+            {
                 return GetValue<int?>("amount", false);
             }
 
-            public TypeEnum LinkedCreditNoteType() {
-                return GetEnum<TypeEnum>("type", true);
+            public TypeEnum LinkedCreditNoteType()
+            {
+                return GetEnum<TypeEnum>("type");
             }
 
-            public string Id() {
-                return GetValue<string>("id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
 
-            public StatusEnum Status() {
-                return GetEnum<StatusEnum>("status", true);
+            public StatusEnum Status()
+            {
+                return GetEnum<StatusEnum>("status");
             }
 
-            public int? AmountAdjusted() {
+            public int? AmountAdjusted()
+            {
                 return GetValue<int?>("amount_adjusted", false);
             }
 
-            public int? AmountRefunded() {
+            public int? AmountRefunded()
+            {
                 return GetValue<int?>("amount_refunded", false);
             }
-
         }
 
         #endregion

@@ -1,52 +1,57 @@
 ﻿using System;
 using ChargeBee.Api;
 
-namespace ChargeBee
+namespace ChargeBee.Filters
 {
-	public class EnumFilter<T, U> where U : EntityRequest<U>
-	{
+    public class EnumFilter<T, TU> where TU : EntityRequest<TU>
+    {
+        private readonly string _paramName;
 
-		private U req;
-		private String paramName;
-		private bool supportsPresenceOperator;
+        private readonly TU _req;
+        private bool _supportsPresenceOperator;
 
-		public EnumFilter(String paramName, U req) {
-			this.paramName = paramName;
-			this.req = req;
-		}
+        public EnumFilter(string paramName, TU req)
+        {
+            _paramName = paramName;
+            _req = req;
+        }
 
-		public EnumFilter<T,U> SupportsPresenceOperator(bool supportsPresenceOperator) {
-			this.supportsPresenceOperator = supportsPresenceOperator;
-			return this;
-		}
+        public EnumFilter<T, TU> SupportsPresenceOperator(bool supportsPresenceOperator)
+        {
+            _supportsPresenceOperator = supportsPresenceOperator;
+            return this;
+        }
 
-		public U Is(T value) {
-			req.Params().AddOpt(paramName + "[is]",value);
-			return req;
-		}
+        public TU Is(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[is]", value);
+            return _req;
+        }
 
-		public U IsNot(T value) {
-			req.Params().AddOpt(paramName + "[is_not]",value);
-			return req;
-		}
+        public TU IsNot(T value)
+        {
+            _req.Params().AddOpt(_paramName + "[is_not]", value);
+            return _req;
+        }
 
-		public U In(params T[] value) {
-			req.Params().AddOpt(paramName + "[in]", value);
-			return req;
-		} 
+        public TU In(params T[] value)
+        {
+            _req.Params().AddOpt(_paramName + "[in]", value);
+            return _req;
+        }
 
-		public U NotIn(params T[] value) {
-			req.Params().AddOpt(paramName + "[not_in]", value);
-			return req;
-		}
+        public TU NotIn(params T[] value)
+        {
+            _req.Params().AddOpt(_paramName + "[not_in]", value);
+            return _req;
+        }
 
-		public U IsPresent(bool value) {
-			if(!supportsPresenceOperator) {
-				throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
-			}
-			req.Params().AddOpt(paramName + "[is_present]", value);
-			return req;
-		}
-	}
+        public TU IsPresent(bool value)
+        {
+            if (!_supportsPresenceOperator)
+                throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
+            _req.Params().AddOpt(_paramName + "[is_present]", value);
+            return _req;
+        }
+    }
 }
-

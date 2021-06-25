@@ -1,125 +1,90 @@
-using System.ComponentModel;
 using System.Runtime.Serialization;
 
 namespace ChargeBee.Models.Enums
 {
     public enum GatewayEnum
     {
-
         [EnumMember(Value = "Unknown Enum")]
         UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
 
-        [EnumMember(Value = "chargebee")]
-         Chargebee,
+        [EnumMember(Value = "chargebee")] Chargebee,
 
-        [EnumMember(Value = "stripe")]
-         Stripe,
+        [EnumMember(Value = "stripe")] Stripe,
 
-        [EnumMember(Value = "wepay")]
-         Wepay,
+        [EnumMember(Value = "wepay")] Wepay,
 
-        [EnumMember(Value = "braintree")]
-         Braintree,
+        [EnumMember(Value = "braintree")] Braintree,
 
-        [EnumMember(Value = "authorize_net")]
-         AuthorizeNet,
+        [EnumMember(Value = "authorize_net")] AuthorizeNet,
 
-        [EnumMember(Value = "paypal_pro")]
-         PaypalPro,
+        [EnumMember(Value = "paypal_pro")] PaypalPro,
 
-        [EnumMember(Value = "pin")]
-         Pin,
+        [EnumMember(Value = "pin")] Pin,
 
-        [EnumMember(Value = "eway")]
-         Eway,
+        [EnumMember(Value = "eway")] Eway,
 
-        [EnumMember(Value = "eway_rapid")]
-         EwayRapid,
+        [EnumMember(Value = "eway_rapid")] EwayRapid,
 
-        [EnumMember(Value = "worldpay")]
-         Worldpay,
+        [EnumMember(Value = "worldpay")] Worldpay,
 
         [EnumMember(Value = "balanced_payments")]
-         BalancedPayments,
+        BalancedPayments,
 
-        [EnumMember(Value = "beanstream")]
-         Beanstream,
+        [EnumMember(Value = "beanstream")] Beanstream,
 
-        [EnumMember(Value = "bluepay")]
-         Bluepay,
+        [EnumMember(Value = "bluepay")] Bluepay,
 
-        [EnumMember(Value = "elavon")]
-         Elavon,
+        [EnumMember(Value = "elavon")] Elavon,
 
         [EnumMember(Value = "first_data_global")]
-         FirstDataGlobal,
+        FirstDataGlobal,
 
-        [EnumMember(Value = "hdfc")]
-         Hdfc,
+        [EnumMember(Value = "hdfc")] Hdfc,
 
-        [EnumMember(Value = "migs")]
-         Migs,
+        [EnumMember(Value = "migs")] Migs,
 
-        [EnumMember(Value = "nmi")]
-         Nmi,
+        [EnumMember(Value = "nmi")] Nmi,
 
-        [EnumMember(Value = "ogone")]
-         Ogone,
+        [EnumMember(Value = "ogone")] Ogone,
 
-        [EnumMember(Value = "paymill")]
-         Paymill,
+        [EnumMember(Value = "paymill")] Paymill,
 
         [EnumMember(Value = "paypal_payflow_pro")]
-         PaypalPayflowPro,
+        PaypalPayflowPro,
 
-        [EnumMember(Value = "sage_pay")]
-         SagePay,
+        [EnumMember(Value = "sage_pay")] SagePay,
 
-        [EnumMember(Value = "tco")]
-         Tco,
+        [EnumMember(Value = "tco")] Tco,
 
-        [EnumMember(Value = "wirecard")]
-         Wirecard,
+        [EnumMember(Value = "wirecard")] Wirecard,
 
         [EnumMember(Value = "amazon_payments")]
-         AmazonPayments,
+        AmazonPayments,
 
         [EnumMember(Value = "paypal_express_checkout")]
-         PaypalExpressCheckout,
+        PaypalExpressCheckout,
 
-        [EnumMember(Value = "gocardless")]
-         Gocardless,
+        [EnumMember(Value = "gocardless")] Gocardless,
 
-        [EnumMember(Value = "adyen")]
-         Adyen,
+        [EnumMember(Value = "adyen")] Adyen,
 
-        [EnumMember(Value = "orbital")]
-         Orbital,
+        [EnumMember(Value = "orbital")] Orbital,
 
-        [EnumMember(Value = "moneris_us")]
-         MonerisUs,
+        [EnumMember(Value = "moneris_us")] MonerisUs,
 
-        [EnumMember(Value = "moneris")]
-         Moneris,
+        [EnumMember(Value = "moneris")] Moneris,
 
-        [EnumMember(Value = "bluesnap")]
-         Bluesnap,
+        [EnumMember(Value = "bluesnap")] Bluesnap,
 
-        [EnumMember(Value = "cybersource")]
-         Cybersource,
+        [EnumMember(Value = "cybersource")] Cybersource,
 
-        [EnumMember(Value = "vantiv")]
-         Vantiv,
+        [EnumMember(Value = "vantiv")] Vantiv,
 
-        [EnumMember(Value = "checkout_com")]
-         CheckoutCom,
+        [EnumMember(Value = "checkout_com")] CheckoutCom,
 
-        [EnumMember(Value = "paypal")]
-         Paypal,
+        [EnumMember(Value = "paypal")] Paypal,
 
-        [EnumMember(Value = "not_applicable")]
-         NotApplicable,
-
+        [EnumMember(Value = "not_applicable")] NotApplicable
     }
 }

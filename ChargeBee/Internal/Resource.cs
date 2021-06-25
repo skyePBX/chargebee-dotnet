@@ -1,175 +1,170 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Reflection;
-using Newtonsoft.Json.Linq;
 using System.Runtime.Serialization;
 using ChargeBee.Api;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Internal
 {
-	public class Resource : JSONSupport
-	{
-		public Resource() { }
+    public class Resource : JsonSupport
+    {
+        public Resource()
+        {
+        }
 
-		internal Resource(string json)
-		{
-			if (!String.IsNullOrEmpty(json))
-				m_jobj = JToken.Parse(json);
-		}
-		
-		internal Resource(JToken jobj)
-		{
-			m_jobj = jobj;
-		}
+        internal Resource(string json)
+        {
+            if (!string.IsNullOrEmpty(json))
+                MJobj = JToken.Parse(json);
+        }
 
-		public T GetValue<T>(string key, bool required = true)
-		{
-			if (required)
-				ThrowIfKeyMissed(key);
-			
-			if (m_jobj[key] == null) return default(T);
-			
-			return m_jobj[key].ToObject<T>();
-		}
+        internal Resource(JToken jobj)
+        {
+            MJobj = jobj;
+        }
 
-		public DateTime? GetDateTime(string key, bool required = true)
-		{
-			long? ts = GetValue<long?>(key, required);
-			if (ts == null) return null;
-			return ApiUtil.ConvertFromTimestamp((long)ts);
-		}
-
-		public JToken GetJToken(string key, bool required = true)
-		{
-			if (required)
-				ThrowIfKeyMissed (key);
-
-			if (m_jobj [key] == null)
-				return null;
-
-			return JToken.Parse(m_jobj[key].ToString());
-		}
-
-        public JArray GetJArray(String key, bool required = true)
+        public T GetValue<T>(string key, bool required = true)
         {
             if (required)
                 ThrowIfKeyMissed(key);
 
-            if (m_jobj[key] == null)
+            if (MJobj[key] == null) return default;
+
+            return MJobj[key].ToObject<T>();
+        }
+
+        public DateTime? GetDateTime(string key, bool required = true)
+        {
+            var ts = GetValue<long?>(key, required);
+            if (ts == null) return null;
+            return ApiUtil.ConvertFromTimestamp((long) ts);
+        }
+
+        public JToken GetJToken(string key, bool required = true)
+        {
+            if (required)
+                ThrowIfKeyMissed(key);
+
+            if (MJobj[key] == null)
                 return null;
 
-            return JArray.Parse(m_jobj[key].ToString());
+            return JToken.Parse(MJobj[key].ToString());
+        }
+
+        public JArray GetJArray(string key, bool required = true)
+        {
+            if (required)
+                ThrowIfKeyMissed(key);
+
+            if (MJobj[key] == null)
+                return null;
+
+            return JArray.Parse(MJobj[key].ToString());
         }
 
         public T GetEnum<T>(string key, bool required = true)
-		{
-			string value = GetValue<string>(key, required);
-			if (String.IsNullOrEmpty(value)) return default(T);
-			
-			Type eType = typeof(T);
-			
-			// Handle nullable enum
-			if (eType.IsConstructedGenericType)
-				eType = eType.GenericTypeArguments[0];
-			
-			foreach (var fi in eType.GetTypeInfo().DeclaredFields)
-			{
-				EnumMemberAttribute[] attrs = 
-					(EnumMemberAttribute[])fi.GetCustomAttributes(typeof(EnumMemberAttribute), false);
-				
-				if (attrs.Length == 0)
-					continue;
-				
-				if (value == attrs[0].Value)
-					return (T)fi.GetValue(null);
-			}
-			
-			return default(T);
-		}
-		
-		protected void ThrowIfKeyMissed(string key)
-		{
-			if (m_jobj[key] == null)
-				throw new ArgumentException(String.Format("The property {0} is not present!", key));
-		}
+        {
+            var value = GetValue<string>(key, required);
+            if (string.IsNullOrEmpty(value)) return default;
 
-		protected static string CheckNull(string id)
-		{
-			if (String.IsNullOrEmpty(id))
-				throw new ArgumentException("ID can't be null or emtpy!");
-			
-			return id;
-		}
+            var eType = typeof(T);
 
-		protected List<T> GetResourceList<T>(string property) where T : Resource, new()
-		{
-			if (m_jobj == null)
-				return null;
-			
-			JToken jobj = m_jobj[property];
-			if (jobj == null)
-				return null;
-			
-			List<T> list = new List<T>();
-			foreach (var item in jobj.Children())
-			{
-				T t = new T();
-				t.JObj = item;
-				list.Add(t);
-			}
-			
-			return list;
-		}
+            // Handle nullable enum
+            if (eType.IsConstructedGenericType)
+                eType = eType.GenericTypeArguments[0];
+
+            foreach (var fi in eType.GetTypeInfo().DeclaredFields)
+            {
+                var attrs =
+                    (EnumMemberAttribute[]) fi.GetCustomAttributes(typeof(EnumMemberAttribute), false);
+
+                if (attrs.Length == 0)
+                    continue;
+
+                if (value == attrs[0].Value)
+                    return (T) fi.GetValue(null);
+            }
+
+            return default;
+        }
+
+        protected void ThrowIfKeyMissed(string key)
+        {
+            if (MJobj[key] == null)
+                throw new ArgumentException($"The property {key} is not present!");
+        }
+
+        protected static string CheckNull(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("ID can't be null or emtpy!");
+
+            return id;
+        }
+
+        protected List<T> GetResourceList<T>(string property) where T : Resource, new()
+        {
+            if (MJobj == null)
+                return null;
+
+            var jobj = MJobj[property];
+            if (jobj == null)
+                return null;
+
+            var list = new List<T>();
+            foreach (var item in jobj.Children())
+            {
+                var t = new T();
+                t.JObj = item;
+                list.Add(t);
+            }
+
+            return list;
+        }
 
 
-		protected List<T> GetList<T>(string property) 
-		{
-			if (m_jobj == null)
-				return null;
-			
-			JToken jobj = m_jobj[property];
-			if (jobj == null)
-				return null;
-			
-			List<T> list = new List<T>();
-			foreach (var item in jobj.Children())
-			{
-				list.Add(item.ToObject<T>());
-			}
-			
-			return list;
-		}
+        protected List<T> GetList<T>(string property)
+        {
+            if (MJobj == null)
+                return null;
 
-		protected T GetSubResource<T>(string property) where T : Resource, new()
-		{
-			if (m_jobj == null)
-				return null;
-			
-			JToken jobj = m_jobj[property];
-			if (jobj == null)
-				return null;
-			T t = new T();
-			t.JObj = jobj;
-			return t;
-		}
+            var jobj = MJobj[property];
+            if (jobj == null)
+                return null;
 
-		protected static void apiVersionCheck(JToken jObj){
-			if (jObj ["api_version"] == null) {
-				return;
-			}
-			string apiVersion =  jObj ["api_version"].ToString ().ToUpper();
-			if(!apiVersion.Equals(ApiConfig.API_VERSION, StringComparison.OrdinalIgnoreCase)) {
-				throw new ArgumentException ("API version [" + apiVersion + "] in response does not match "
-					+ "with client library API version [" + ApiConfig.API_VERSION.ToUpper() + "]");
-			}
-		}
+            var list = new List<T>();
+            foreach (var item in jobj.Children()) list.Add(item.ToObject<T>());
 
-		public JToken GetJToken(){
-			return m_jobj;
-		}
+            return list;
+        }
 
-	}
-	 
+        protected T GetSubResource<T>(string property) where T : Resource, new()
+        {
+            if (MJobj == null)
+                return null;
+
+            var jobj = MJobj[property];
+            if (jobj == null)
+                return null;
+            var t = new T();
+            t.JObj = jobj;
+            return t;
+        }
+
+        protected static void ApiVersionCheck(JToken jObj)
+        {
+            if (jObj["api_version"] == null) return;
+            var apiVersion = jObj["api_version"].ToString().ToUpper();
+            if (!apiVersion.Equals(ApiConfig.ApiVersion, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("API version [" + apiVersion + "] in response does not match "
+                                            + "with client library API version [" + ApiConfig.ApiVersion.ToUpper() +
+                                            "]");
+        }
+
+        public JToken GetJToken()
+        {
+            return MJobj;
+        }
+    }
 }
-

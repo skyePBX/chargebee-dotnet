@@ -1,26 +1,19 @@
-using System.ComponentModel;
 using System.Runtime.Serialization;
 
 namespace ChargeBee.Models.Enums
 {
     public enum AvalaraSaleTypeEnum
     {
-
         [EnumMember(Value = "Unknown Enum")]
         UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
 
-        [EnumMember(Value = "wholesale")]
-         Wholesale,
+        [EnumMember(Value = "wholesale")] Wholesale,
 
-        [EnumMember(Value = "retail")]
-         Retail,
+        [EnumMember(Value = "retail")] Retail,
 
-        [EnumMember(Value = "consumed")]
-         Consumed,
+        [EnumMember(Value = "consumed")] Consumed,
 
-        [EnumMember(Value = "vendor_use")]
-         VendorUse,
-
+        [EnumMember(Value = "vendor_use")] VendorUse
     }
 }

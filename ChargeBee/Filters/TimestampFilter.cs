@@ -1,51 +1,57 @@
 ﻿using System;
 using ChargeBee.Api;
 
-namespace ChargeBee
+namespace ChargeBee.Filters
 {
-	public class TimestampFilter<U> where U : EntityRequest<U> {
-		
-		private U req;
-		private String paramName;
-		private bool supportsPresenceOperator;
+    public class TimestampFilter<TU> where TU : EntityRequest<TU>
+    {
+        private readonly string _paramName;
 
-		public TimestampFilter(String paramName, U req) {
-			this.paramName = paramName;
-			this.req = req;
-		}
+        private readonly TU _req;
+        private bool _supportsPresenceOperator;
 
-		public TimestampFilter<U> SupportsPresenceOperator(bool supportsPresenceOperator) {
-			this.supportsPresenceOperator = supportsPresenceOperator;
-			return this;
-		}
+        public TimestampFilter(string paramName, TU req)
+        {
+            _paramName = paramName;
+            _req = req;
+        }
 
-		public U On(DateTime value) {
-			req.Params().AddOpt(paramName + "[on]",value);
-			return req;
-		}
+        public TimestampFilter<TU> SupportsPresenceOperator(bool supportsPresenceOperator)
+        {
+            _supportsPresenceOperator = supportsPresenceOperator;
+            return this;
+        }
 
-		public U Before(DateTime value) {
-			req.Params().AddOpt(paramName + "[before]",value);
-			return req;
-		}
+        public TU On(DateTime value)
+        {
+            _req.Params().AddOpt(_paramName + "[on]", value);
+            return _req;
+        }
 
-		public U After(DateTime value) {
-			req.Params().AddOpt(paramName + "[after]",value);
-			return req;
-		}
+        public TU Before(DateTime value)
+        {
+            _req.Params().AddOpt(_paramName + "[before]", value);
+            return _req;
+        }
 
-		public U Between(DateTime value1, DateTime value2) {
-			req.Params().AddOpt(paramName + "[between]", new DateTime[]{value1,value2});
-			return req;
-		}
+        public TU After(DateTime value)
+        {
+            _req.Params().AddOpt(_paramName + "[after]", value);
+            return _req;
+        }
 
-		public U IsPresent(bool value) {
-			if(!supportsPresenceOperator) {
-				throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
-			}
-			req.Params().AddOpt(paramName + "[is_present]", value);
-			return req;
-		}    
-	}
+        public TU Between(DateTime value1, DateTime value2)
+        {
+            _req.Params().AddOpt(_paramName + "[between]", new[] {value1, value2});
+            return _req;
+        }
+
+        public TU IsPresent(bool value)
+        {
+            if (!_supportsPresenceOperator)
+                throw new NotSupportedException("operator '[is_present]' is not supported for this filter-parameter");
+            _req.Params().AddOpt(_paramName + "[is_present]", value);
+            return _req;
+        }
+    }
 }
-

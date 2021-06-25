@@ -1,125 +1,112 @@
 using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Filters;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class SiteMigrationDetail : Resource 
+    public class SiteMigrationDetail : Resource
     {
-    
-        public SiteMigrationDetail() { }
+        public enum StatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "moved_in")] MovedIn,
+            [EnumMember(Value = "moved_out")] MovedOut,
+            [EnumMember(Value = "moving_out")] MovingOut
+        }
+
+        public SiteMigrationDetail()
+        {
+        }
 
         public SiteMigrationDetail(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public SiteMigrationDetail(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public SiteMigrationDetail(String jsonString)
+        public SiteMigrationDetail(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static SiteMigrationDetailListRequest List()
         {
-            string url = ApiUtil.BuildUrl("site_migration_details");
+            var url = ApiUtil.BuildUrl("site_migration_details");
             return new SiteMigrationDetailListRequest(url);
         }
+
         #endregion
-        
-        #region Properties
-        public string EntityId 
-        {
-            get { return GetValue<string>("entity_id", true); }
-        }
-        public string OtherSiteName 
-        {
-            get { return GetValue<string>("other_site_name", true); }
-        }
-        public string EntityIdAtOtherSite 
-        {
-            get { return GetValue<string>("entity_id_at_other_site", true); }
-        }
-        public DateTime MigratedAt 
-        {
-            get { return (DateTime)GetDateTime("migrated_at", true); }
-        }
-        public EntityTypeEnum EntityType 
-        {
-            get { return GetEnum<EntityTypeEnum>("entity_type", true); }
-        }
-        public StatusEnum Status 
-        {
-            get { return GetEnum<StatusEnum>("status", true); }
-        }
-        
-        #endregion
-        
+
         #region Requests
-        public class SiteMigrationDetailListRequest : ListRequestBase<SiteMigrationDetailListRequest> 
+
+        public class SiteMigrationDetailListRequest : ListRequestBase<SiteMigrationDetailListRequest>
         {
-            public SiteMigrationDetailListRequest(string url) 
-                    : base(url)
+            public SiteMigrationDetailListRequest(string url)
+                : base(url)
             {
             }
 
-            public StringFilter<SiteMigrationDetailListRequest> EntityIdAtOtherSite() 
+            public StringFilter<SiteMigrationDetailListRequest> EntityIdAtOtherSite()
             {
-                return new StringFilter<SiteMigrationDetailListRequest>("entity_id_at_other_site", this);        
+                return new("entity_id_at_other_site", this);
             }
-            public StringFilter<SiteMigrationDetailListRequest> OtherSiteName() 
+
+            public StringFilter<SiteMigrationDetailListRequest> OtherSiteName()
             {
-                return new StringFilter<SiteMigrationDetailListRequest>("other_site_name", this);        
+                return new("other_site_name", this);
             }
-            public StringFilter<SiteMigrationDetailListRequest> EntityId() 
+
+            public StringFilter<SiteMigrationDetailListRequest> EntityId()
             {
-                return new StringFilter<SiteMigrationDetailListRequest>("entity_id", this);        
+                return new("entity_id", this);
             }
-            public EnumFilter<ChargeBee.Models.Enums.EntityTypeEnum, SiteMigrationDetailListRequest> EntityType() 
+
+            public EnumFilter<EntityTypeEnum, SiteMigrationDetailListRequest> EntityType()
             {
-                return new EnumFilter<ChargeBee.Models.Enums.EntityTypeEnum, SiteMigrationDetailListRequest>("entity_type", this);        
+                return new("entity_type", this);
             }
-            public EnumFilter<StatusEnum, SiteMigrationDetailListRequest> Status() 
+
+            public EnumFilter<StatusEnum, SiteMigrationDetailListRequest> Status()
             {
-                return new EnumFilter<StatusEnum, SiteMigrationDetailListRequest>("status", this);        
+                return new("status", this);
             }
         }
+
         #endregion
 
-        public enum StatusEnum
-        {
+        #region Properties
 
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "moved_in")]
-            MovedIn,
-            [EnumMember(Value = "moved_out")]
-            MovedOut,
-            [EnumMember(Value = "moving_out")]
-            MovingOut,
+        public string EntityId => GetValue<string>("entity_id");
 
-        }
+        public string OtherSiteName => GetValue<string>("other_site_name");
+
+        public string EntityIdAtOtherSite => GetValue<string>("entity_id_at_other_site");
+
+        public DateTime MigratedAt => (DateTime) GetDateTime("migrated_at");
+
+        public EntityTypeEnum EntityType => GetEnum<EntityTypeEnum>("entity_type");
+
+        public StatusEnum Status => GetEnum<StatusEnum>("status");
+
+        #endregion
 
         #region Subclasses
 

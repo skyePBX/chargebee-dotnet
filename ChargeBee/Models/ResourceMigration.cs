@@ -1,124 +1,106 @@
 using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class ResourceMigration : Resource 
+    public class ResourceMigration : Resource
     {
-    
-        public ResourceMigration() { }
+        public enum StatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "scheduled")] Scheduled,
+            [EnumMember(Value = "failed")] Failed,
+            [EnumMember(Value = "succeeded")] Succeeded
+        }
+
+        public ResourceMigration()
+        {
+        }
 
         public ResourceMigration(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public ResourceMigration(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public ResourceMigration(String jsonString)
+        public ResourceMigration(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static RetrieveLatestRequest RetrieveLatest()
         {
-            string url = ApiUtil.BuildUrl("resource_migrations", "retrieve_latest");
-            return new RetrieveLatestRequest(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("resource_migrations", "retrieve_latest");
+            return new RetrieveLatestRequest(url, HttpMethod.Get);
         }
+
         #endregion
-        
-        #region Properties
-        public string FromSite 
-        {
-            get { return GetValue<string>("from_site", true); }
-        }
-        public EntityTypeEnum EntityType 
-        {
-            get { return GetEnum<EntityTypeEnum>("entity_type", true); }
-        }
-        public string EntityId 
-        {
-            get { return GetValue<string>("entity_id", true); }
-        }
-        public StatusEnum Status 
-        {
-            get { return GetEnum<StatusEnum>("status", true); }
-        }
-        public string Errors 
-        {
-            get { return GetValue<string>("errors", false); }
-        }
-        public DateTime CreatedAt 
-        {
-            get { return (DateTime)GetDateTime("created_at", true); }
-        }
-        public DateTime UpdatedAt 
-        {
-            get { return (DateTime)GetDateTime("updated_at", true); }
-        }
-        
-        #endregion
-        
+
         #region Requests
-        public class RetrieveLatestRequest : EntityRequest<RetrieveLatestRequest> 
+
+        public class RetrieveLatestRequest : EntityRequest<RetrieveLatestRequest>
         {
-            public RetrieveLatestRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public RetrieveLatestRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public RetrieveLatestRequest FromSite(string fromSite) 
+            public RetrieveLatestRequest FromSite(string fromSite)
             {
-                m_params.Add("from_site", fromSite);
+                MParams.Add("from_site", fromSite);
                 return this;
             }
-            public RetrieveLatestRequest EntityType(ChargeBee.Models.Enums.EntityTypeEnum entityType) 
+
+            public RetrieveLatestRequest EntityType(EntityTypeEnum entityType)
             {
-                m_params.Add("entity_type", entityType);
+                MParams.Add("entity_type", entityType);
                 return this;
             }
-            public RetrieveLatestRequest EntityId(string entityId) 
+
+            public RetrieveLatestRequest EntityId(string entityId)
             {
-                m_params.Add("entity_id", entityId);
+                MParams.Add("entity_id", entityId);
                 return this;
             }
         }
+
         #endregion
 
-        public enum StatusEnum
-        {
+        #region Properties
 
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "scheduled")]
-            Scheduled,
-            [EnumMember(Value = "failed")]
-            Failed,
-            [EnumMember(Value = "succeeded")]
-            Succeeded,
+        public string FromSite => GetValue<string>("from_site");
 
-        }
+        public EntityTypeEnum EntityType => GetEnum<EntityTypeEnum>("entity_type");
+
+        public string EntityId => GetValue<string>("entity_id");
+
+        public StatusEnum Status => GetEnum<StatusEnum>("status");
+
+        public string Errors => GetValue<string>("errors", false);
+
+        public DateTime CreatedAt => (DateTime) GetDateTime("created_at");
+
+        public DateTime UpdatedAt => (DateTime) GetDateTime("updated_at");
+
+        #endregion
 
         #region Subclasses
 

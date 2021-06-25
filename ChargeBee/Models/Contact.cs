@@ -1,88 +1,61 @@
-using System;
 using System.IO;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
 using ChargeBee.Internal;
-using ChargeBee.Api;
-using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Contact : Resource 
+    public class Contact : Resource
     {
-    
-        public Contact() { }
+        public Contact()
+        {
+        }
 
         public Contact(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Contact(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Contact(String jsonString)
+        public Contact(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public string FirstName 
-        {
-            get { return GetValue<string>("first_name", false); }
-        }
-        public string LastName 
-        {
-            get { return GetValue<string>("last_name", false); }
-        }
-        public string Email 
-        {
-            get { return GetValue<string>("email", true); }
-        }
-        public string Phone 
-        {
-            get { return GetValue<string>("phone", false); }
-        }
-        public string Label 
-        {
-            get { return GetValue<string>("label", false); }
-        }
-        public bool Enabled 
-        {
-            get { return GetValue<bool>("enabled", true); }
-        }
-        public bool SendAccountEmail 
-        {
-            get { return GetValue<bool>("send_account_email", true); }
-        }
-        public bool SendBillingEmail 
-        {
-            get { return GetValue<bool>("send_billing_email", true); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public string FirstName => GetValue<string>("first_name", false);
+
+        public string LastName => GetValue<string>("last_name", false);
+
+        public string Email => GetValue<string>("email");
+
+        public string Phone => GetValue<string>("phone", false);
+
+        public string Label => GetValue<string>("label", false);
+
+        public bool Enabled => GetValue<bool>("enabled");
+
+        public bool SendAccountEmail => GetValue<bool>("send_account_email");
+
+        public bool SendBillingEmail => GetValue<bool>("send_billing_email");
+
         #endregion
-        
 
 
         #region Subclasses

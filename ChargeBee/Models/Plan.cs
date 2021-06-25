@@ -1,1177 +1,1211 @@
 using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Filters;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Plan : Resource 
+    public class Plan : Resource
     {
-    
-        public Plan() { }
+        public enum AddonApplicabilityEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "all")] All,
+            [EnumMember(Value = "restricted")] Restricted
+        }
+
+        [Obsolete]
+        public enum ChargeModelEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "flat_fee")] FlatFee,
+            [EnumMember(Value = "per_unit")] PerUnit,
+            [EnumMember(Value = "tiered")] Tiered,
+            [EnumMember(Value = "volume")] Volume,
+            [EnumMember(Value = "stairstep")] Stairstep
+        }
+
+        public enum PeriodUnitEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "day")] Day,
+            [EnumMember(Value = "week")] Week,
+            [EnumMember(Value = "month")] Month,
+            [EnumMember(Value = "year")] Year
+        }
+
+        public enum ShippingFrequencyPeriodUnitEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "year")] Year,
+            [EnumMember(Value = "month")] Month,
+            [EnumMember(Value = "week")] Week,
+            [EnumMember(Value = "day")] Day
+        }
+
+        public enum StatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "active")] Active,
+            [EnumMember(Value = "archived")] Archived,
+            [EnumMember(Value = "deleted")] Deleted
+        }
+
+        public enum TrialPeriodUnitEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "day")] Day,
+            [EnumMember(Value = "month")] Month
+        }
+
+        public Plan()
+        {
+        }
 
         public Plan(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Plan(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Plan(String jsonString)
+        public Plan(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         public static CreateRequest Create()
         {
-            string url = ApiUtil.BuildUrl("plans");
-            return new CreateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("plans");
+            return new CreateRequest(url, HttpMethod.Post);
         }
+
         public static UpdateRequest Update(string id)
         {
-            string url = ApiUtil.BuildUrl("plans", CheckNull(id));
-            return new UpdateRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("plans", CheckNull(id));
+            return new UpdateRequest(url, HttpMethod.Post);
         }
+
         public static PlanListRequest List()
         {
-            string url = ApiUtil.BuildUrl("plans");
+            var url = ApiUtil.BuildUrl("plans");
             return new PlanListRequest(url);
         }
+
         public static EntityRequest<Type> Retrieve(string id)
         {
-            string url = ApiUtil.BuildUrl("plans", CheckNull(id));
-            return new EntityRequest<Type>(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("plans", CheckNull(id));
+            return new EntityRequest<Type>(url, HttpMethod.Get);
         }
+
         public static EntityRequest<Type> Delete(string id)
         {
-            string url = ApiUtil.BuildUrl("plans", CheckNull(id), "delete");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("plans", CheckNull(id), "delete");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         public static CopyRequest Copy()
         {
-            string url = ApiUtil.BuildUrl("plans", "copy");
-            return new CopyRequest(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("plans", "copy");
+            return new CopyRequest(url, HttpMethod.Post);
         }
+
         public static EntityRequest<Type> Unarchive(string id)
         {
-            string url = ApiUtil.BuildUrl("plans", CheckNull(id), "unarchive");
-            return new EntityRequest<Type>(url, HttpMethod.POST);
+            var url = ApiUtil.BuildUrl("plans", CheckNull(id), "unarchive");
+            return new EntityRequest<Type>(url, HttpMethod.Post);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public string Name 
-        {
-            get { return GetValue<string>("name", true); }
-        }
-        public string InvoiceName 
-        {
-            get { return GetValue<string>("invoice_name", false); }
-        }
-        public string Description 
-        {
-            get { return GetValue<string>("description", false); }
-        }
-        public int? Price 
-        {
-            get { return GetValue<int?>("price", false); }
-        }
-        public string CurrencyCode 
-        {
-            get { return GetValue<string>("currency_code", true); }
-        }
-        public int Period 
-        {
-            get { return GetValue<int>("period", true); }
-        }
-        public PeriodUnitEnum PeriodUnit 
-        {
-            get { return GetEnum<PeriodUnitEnum>("period_unit", true); }
-        }
-        public int? TrialPeriod 
-        {
-            get { return GetValue<int?>("trial_period", false); }
-        }
-        public TrialPeriodUnitEnum? TrialPeriodUnit 
-        {
-            get { return GetEnum<TrialPeriodUnitEnum>("trial_period_unit", false); }
-        }
-        public PricingModelEnum PricingModel 
-        {
-            get { return GetEnum<PricingModelEnum>("pricing_model", true); }
-        }
-        [Obsolete]
-        public ChargeModelEnum ChargeModel 
-        {
-            get { return GetEnum<ChargeModelEnum>("charge_model", true); }
-        }
-        public int FreeQuantity 
-        {
-            get { return GetValue<int>("free_quantity", true); }
-        }
-        public int? SetupCost 
-        {
-            get { return GetValue<int?>("setup_cost", false); }
-        }
-        [Obsolete]
-        public double? DowngradePenalty 
-        {
-            get { return GetValue<double?>("downgrade_penalty", false); }
-        }
-        public StatusEnum Status 
-        {
-            get { return GetEnum<StatusEnum>("status", true); }
-        }
-        public DateTime? ArchivedAt 
-        {
-            get { return GetDateTime("archived_at", false); }
-        }
-        public int? BillingCycles 
-        {
-            get { return GetValue<int?>("billing_cycles", false); }
-        }
-        public string RedirectUrl 
-        {
-            get { return GetValue<string>("redirect_url", false); }
-        }
-        public bool EnabledInHostedPages 
-        {
-            get { return GetValue<bool>("enabled_in_hosted_pages", true); }
-        }
-        public bool EnabledInPortal 
-        {
-            get { return GetValue<bool>("enabled_in_portal", true); }
-        }
-        public AddonApplicabilityEnum AddonApplicability 
-        {
-            get { return GetEnum<AddonApplicabilityEnum>("addon_applicability", true); }
-        }
-        public string TaxCode 
-        {
-            get { return GetValue<string>("tax_code", false); }
-        }
-        public string TaxjarProductCode 
-        {
-            get { return GetValue<string>("taxjar_product_code", false); }
-        }
-        public AvalaraSaleTypeEnum? AvalaraSaleType 
-        {
-            get { return GetEnum<AvalaraSaleTypeEnum>("avalara_sale_type", false); }
-        }
-        public int? AvalaraTransactionType 
-        {
-            get { return GetValue<int?>("avalara_transaction_type", false); }
-        }
-        public int? AvalaraServiceType 
-        {
-            get { return GetValue<int?>("avalara_service_type", false); }
-        }
-        public string Sku 
-        {
-            get { return GetValue<string>("sku", false); }
-        }
-        public string AccountingCode 
-        {
-            get { return GetValue<string>("accounting_code", false); }
-        }
-        public string AccountingCategory1 
-        {
-            get { return GetValue<string>("accounting_category1", false); }
-        }
-        public string AccountingCategory2 
-        {
-            get { return GetValue<string>("accounting_category2", false); }
-        }
-        public bool? IsShippable 
-        {
-            get { return GetValue<bool?>("is_shippable", false); }
-        }
-        public int? ShippingFrequencyPeriod 
-        {
-            get { return GetValue<int?>("shipping_frequency_period", false); }
-        }
-        public ShippingFrequencyPeriodUnitEnum? ShippingFrequencyPeriodUnit 
-        {
-            get { return GetEnum<ShippingFrequencyPeriodUnitEnum>("shipping_frequency_period_unit", false); }
-        }
-        public long? ResourceVersion 
-        {
-            get { return GetValue<long?>("resource_version", false); }
-        }
-        public DateTime? UpdatedAt 
-        {
-            get { return GetDateTime("updated_at", false); }
-        }
-        public bool Giftable 
-        {
-            get { return GetValue<bool>("giftable", true); }
-        }
-        public string ClaimUrl 
-        {
-            get { return GetValue<string>("claim_url", false); }
-        }
-        public string FreeQuantityInDecimal 
-        {
-            get { return GetValue<string>("free_quantity_in_decimal", false); }
-        }
-        public string PriceInDecimal 
-        {
-            get { return GetValue<string>("price_in_decimal", false); }
-        }
-        public string InvoiceNotes 
-        {
-            get { return GetValue<string>("invoice_notes", false); }
-        }
-        public bool? Taxable 
-        {
-            get { return GetValue<bool?>("taxable", false); }
-        }
-        public string TaxProfileId 
-        {
-            get { return GetValue<string>("tax_profile_id", false); }
-        }
-        public JToken MetaData 
-        {
-            get { return GetJToken("meta_data", false); }
-        }
-        public List<PlanTier> Tiers 
-        {
-            get { return GetResourceList<PlanTier>("tiers"); }
-        }
-        public List<PlanApplicableAddon> ApplicableAddons 
-        {
-            get { return GetResourceList<PlanApplicableAddon>("applicable_addons"); }
-        }
-        public List<PlanAttachedAddon> AttachedAddons 
-        {
-            get { return GetResourceList<PlanAttachedAddon>("attached_addons"); }
-        }
-        public List<PlanEventBasedAddon> EventBasedAddons 
-        {
-            get { return GetResourceList<PlanEventBasedAddon>("event_based_addons"); }
-        }
-        public bool? ShowDescriptionInInvoices 
-        {
-            get { return GetValue<bool?>("show_description_in_invoices", false); }
-        }
-        public bool? ShowDescriptionInQuotes 
-        {
-            get { return GetValue<bool?>("show_description_in_quotes", false); }
-        }
-        
+
+        public string Id => GetValue<string>("id");
+
+        public string Name => GetValue<string>("name");
+
+        public string InvoiceName => GetValue<string>("invoice_name", false);
+
+        public string Description => GetValue<string>("description", false);
+
+        public int? Price => GetValue<int?>("price", false);
+
+        public string CurrencyCode => GetValue<string>("currency_code");
+
+        public int Period => GetValue<int>("period");
+
+        public PeriodUnitEnum PeriodUnit => GetEnum<PeriodUnitEnum>("period_unit");
+
+        public int? TrialPeriod => GetValue<int?>("trial_period", false);
+
+        public TrialPeriodUnitEnum? TrialPeriodUnit => GetEnum<TrialPeriodUnitEnum>("trial_period_unit", false);
+
+        public PricingModelEnum PricingModel => GetEnum<PricingModelEnum>("pricing_model");
+
+        [Obsolete] public ChargeModelEnum ChargeModel => GetEnum<ChargeModelEnum>("charge_model");
+
+        public int FreeQuantity => GetValue<int>("free_quantity");
+
+        public int? SetupCost => GetValue<int?>("setup_cost", false);
+
+        [Obsolete] public double? DowngradePenalty => GetValue<double?>("downgrade_penalty", false);
+
+        public StatusEnum Status => GetEnum<StatusEnum>("status");
+
+        public DateTime? ArchivedAt => GetDateTime("archived_at", false);
+
+        public int? BillingCycles => GetValue<int?>("billing_cycles", false);
+
+        public string RedirectUrl => GetValue<string>("redirect_url", false);
+
+        public bool EnabledInHostedPages => GetValue<bool>("enabled_in_hosted_pages");
+
+        public bool EnabledInPortal => GetValue<bool>("enabled_in_portal");
+
+        public AddonApplicabilityEnum AddonApplicability => GetEnum<AddonApplicabilityEnum>("addon_applicability");
+
+        public string TaxCode => GetValue<string>("tax_code", false);
+
+        public string TaxjarProductCode => GetValue<string>("taxjar_product_code", false);
+
+        public AvalaraSaleTypeEnum? AvalaraSaleType => GetEnum<AvalaraSaleTypeEnum>("avalara_sale_type", false);
+
+        public int? AvalaraTransactionType => GetValue<int?>("avalara_transaction_type", false);
+
+        public int? AvalaraServiceType => GetValue<int?>("avalara_service_type", false);
+
+        public string Sku => GetValue<string>("sku", false);
+
+        public string AccountingCode => GetValue<string>("accounting_code", false);
+
+        public string AccountingCategory1 => GetValue<string>("accounting_category1", false);
+
+        public string AccountingCategory2 => GetValue<string>("accounting_category2", false);
+
+        public bool? IsShippable => GetValue<bool?>("is_shippable", false);
+
+        public int? ShippingFrequencyPeriod => GetValue<int?>("shipping_frequency_period", false);
+
+        public ShippingFrequencyPeriodUnitEnum? ShippingFrequencyPeriodUnit =>
+            GetEnum<ShippingFrequencyPeriodUnitEnum>("shipping_frequency_period_unit", false);
+
+        public long? ResourceVersion => GetValue<long?>("resource_version", false);
+
+        public DateTime? UpdatedAt => GetDateTime("updated_at", false);
+
+        public bool Giftable => GetValue<bool>("giftable");
+
+        public string ClaimUrl => GetValue<string>("claim_url", false);
+
+        public string FreeQuantityInDecimal => GetValue<string>("free_quantity_in_decimal", false);
+
+        public string PriceInDecimal => GetValue<string>("price_in_decimal", false);
+
+        public string InvoiceNotes => GetValue<string>("invoice_notes", false);
+
+        public bool? Taxable => GetValue<bool?>("taxable", false);
+
+        public string TaxProfileId => GetValue<string>("tax_profile_id", false);
+
+        public JToken MetaData => GetJToken("meta_data", false);
+
+        public List<PlanTier> Tiers => GetResourceList<PlanTier>("tiers");
+
+        public List<PlanApplicableAddon> ApplicableAddons => GetResourceList<PlanApplicableAddon>("applicable_addons");
+
+        public List<PlanAttachedAddon> AttachedAddons => GetResourceList<PlanAttachedAddon>("attached_addons");
+
+        public List<PlanEventBasedAddon> EventBasedAddons => GetResourceList<PlanEventBasedAddon>("event_based_addons");
+
+        public bool? ShowDescriptionInInvoices => GetValue<bool?>("show_description_in_invoices", false);
+
+        public bool? ShowDescriptionInQuotes => GetValue<bool?>("show_description_in_quotes", false);
+
         #endregion
-        
+
         #region Requests
-        public class CreateRequest : EntityRequest<CreateRequest> 
+
+        public class CreateRequest : EntityRequest<CreateRequest>
         {
-            public CreateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CreateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CreateRequest Id(string id) 
+            public CreateRequest Id(string id)
             {
-                m_params.Add("id", id);
+                MParams.Add("id", id);
                 return this;
             }
-            public CreateRequest Name(string name) 
+
+            public CreateRequest Name(string name)
             {
-                m_params.Add("name", name);
+                MParams.Add("name", name);
                 return this;
             }
-            public CreateRequest InvoiceName(string invoiceName) 
+
+            public CreateRequest InvoiceName(string invoiceName)
             {
-                m_params.AddOpt("invoice_name", invoiceName);
+                MParams.AddOpt("invoice_name", invoiceName);
                 return this;
             }
-            public CreateRequest Description(string description) 
+
+            public CreateRequest Description(string description)
             {
-                m_params.AddOpt("description", description);
+                MParams.AddOpt("description", description);
                 return this;
             }
-            public CreateRequest TrialPeriod(int trialPeriod) 
+
+            public CreateRequest TrialPeriod(int trialPeriod)
             {
-                m_params.AddOpt("trial_period", trialPeriod);
+                MParams.AddOpt("trial_period", trialPeriod);
                 return this;
             }
-            public CreateRequest TrialPeriodUnit(Plan.TrialPeriodUnitEnum trialPeriodUnit) 
+
+            public CreateRequest TrialPeriodUnit(TrialPeriodUnitEnum trialPeriodUnit)
             {
-                m_params.AddOpt("trial_period_unit", trialPeriodUnit);
+                MParams.AddOpt("trial_period_unit", trialPeriodUnit);
                 return this;
             }
-            public CreateRequest Period(int period) 
+
+            public CreateRequest Period(int period)
             {
-                m_params.AddOpt("period", period);
+                MParams.AddOpt("period", period);
                 return this;
             }
-            public CreateRequest PeriodUnit(Plan.PeriodUnitEnum periodUnit) 
+
+            public CreateRequest PeriodUnit(PeriodUnitEnum periodUnit)
             {
-                m_params.AddOpt("period_unit", periodUnit);
+                MParams.AddOpt("period_unit", periodUnit);
                 return this;
             }
-            public CreateRequest SetupCost(int setupCost) 
+
+            public CreateRequest SetupCost(int setupCost)
             {
-                m_params.AddOpt("setup_cost", setupCost);
+                MParams.AddOpt("setup_cost", setupCost);
                 return this;
             }
-            public CreateRequest Price(int price) 
+
+            public CreateRequest Price(int price)
             {
-                m_params.AddOpt("price", price);
+                MParams.AddOpt("price", price);
                 return this;
             }
-            public CreateRequest PriceInDecimal(string priceInDecimal) 
+
+            public CreateRequest PriceInDecimal(string priceInDecimal)
             {
-                m_params.AddOpt("price_in_decimal", priceInDecimal);
+                MParams.AddOpt("price_in_decimal", priceInDecimal);
                 return this;
             }
-            public CreateRequest CurrencyCode(string currencyCode) 
+
+            public CreateRequest CurrencyCode(string currencyCode)
             {
-                m_params.AddOpt("currency_code", currencyCode);
+                MParams.AddOpt("currency_code", currencyCode);
                 return this;
             }
-            public CreateRequest BillingCycles(int billingCycles) 
+
+            public CreateRequest BillingCycles(int billingCycles)
             {
-                m_params.AddOpt("billing_cycles", billingCycles);
+                MParams.AddOpt("billing_cycles", billingCycles);
                 return this;
             }
-            public CreateRequest PricingModel(ChargeBee.Models.Enums.PricingModelEnum pricingModel) 
+
+            public CreateRequest PricingModel(PricingModelEnum pricingModel)
             {
-                m_params.AddOpt("pricing_model", pricingModel);
+                MParams.AddOpt("pricing_model", pricingModel);
                 return this;
             }
+
             [Obsolete]
-            public CreateRequest ChargeModel(ChargeModelEnum chargeModel) 
+            public CreateRequest ChargeModel(ChargeModelEnum chargeModel)
             {
-                m_params.AddOpt("charge_model", chargeModel);
+                MParams.AddOpt("charge_model", chargeModel);
                 return this;
             }
-            public CreateRequest FreeQuantity(int freeQuantity) 
+
+            public CreateRequest FreeQuantity(int freeQuantity)
             {
-                m_params.AddOpt("free_quantity", freeQuantity);
+                MParams.AddOpt("free_quantity", freeQuantity);
                 return this;
             }
-            public CreateRequest FreeQuantityInDecimal(string freeQuantityInDecimal) 
+
+            public CreateRequest FreeQuantityInDecimal(string freeQuantityInDecimal)
             {
-                m_params.AddOpt("free_quantity_in_decimal", freeQuantityInDecimal);
+                MParams.AddOpt("free_quantity_in_decimal", freeQuantityInDecimal);
                 return this;
             }
-            public CreateRequest AddonApplicability(Plan.AddonApplicabilityEnum addonApplicability) 
+
+            public CreateRequest AddonApplicability(AddonApplicabilityEnum addonApplicability)
             {
-                m_params.AddOpt("addon_applicability", addonApplicability);
+                MParams.AddOpt("addon_applicability", addonApplicability);
                 return this;
             }
+
             [Obsolete]
-            public CreateRequest DowngradePenalty(double downgradePenalty) 
+            public CreateRequest DowngradePenalty(double downgradePenalty)
             {
-                m_params.AddOpt("downgrade_penalty", downgradePenalty);
+                MParams.AddOpt("downgrade_penalty", downgradePenalty);
                 return this;
             }
-            public CreateRequest RedirectUrl(string redirectUrl) 
+
+            public CreateRequest RedirectUrl(string redirectUrl)
             {
-                m_params.AddOpt("redirect_url", redirectUrl);
+                MParams.AddOpt("redirect_url", redirectUrl);
                 return this;
             }
-            public CreateRequest EnabledInHostedPages(bool enabledInHostedPages) 
+
+            public CreateRequest EnabledInHostedPages(bool enabledInHostedPages)
             {
-                m_params.AddOpt("enabled_in_hosted_pages", enabledInHostedPages);
+                MParams.AddOpt("enabled_in_hosted_pages", enabledInHostedPages);
                 return this;
             }
-            public CreateRequest EnabledInPortal(bool enabledInPortal) 
+
+            public CreateRequest EnabledInPortal(bool enabledInPortal)
             {
-                m_params.AddOpt("enabled_in_portal", enabledInPortal);
+                MParams.AddOpt("enabled_in_portal", enabledInPortal);
                 return this;
             }
-            public CreateRequest Taxable(bool taxable) 
+
+            public CreateRequest Taxable(bool taxable)
             {
-                m_params.AddOpt("taxable", taxable);
+                MParams.AddOpt("taxable", taxable);
                 return this;
             }
-            public CreateRequest TaxProfileId(string taxProfileId) 
+
+            public CreateRequest TaxProfileId(string taxProfileId)
             {
-                m_params.AddOpt("tax_profile_id", taxProfileId);
+                MParams.AddOpt("tax_profile_id", taxProfileId);
                 return this;
             }
-            public CreateRequest TaxCode(string taxCode) 
+
+            public CreateRequest TaxCode(string taxCode)
             {
-                m_params.AddOpt("tax_code", taxCode);
+                MParams.AddOpt("tax_code", taxCode);
                 return this;
             }
-            public CreateRequest TaxjarProductCode(string taxjarProductCode) 
+
+            public CreateRequest TaxjarProductCode(string taxjarProductCode)
             {
-                m_params.AddOpt("taxjar_product_code", taxjarProductCode);
+                MParams.AddOpt("taxjar_product_code", taxjarProductCode);
                 return this;
             }
-            public CreateRequest AvalaraSaleType(ChargeBee.Models.Enums.AvalaraSaleTypeEnum avalaraSaleType) 
+
+            public CreateRequest AvalaraSaleType(AvalaraSaleTypeEnum avalaraSaleType)
             {
-                m_params.AddOpt("avalara_sale_type", avalaraSaleType);
+                MParams.AddOpt("avalara_sale_type", avalaraSaleType);
                 return this;
             }
-            public CreateRequest AvalaraTransactionType(int avalaraTransactionType) 
+
+            public CreateRequest AvalaraTransactionType(int avalaraTransactionType)
             {
-                m_params.AddOpt("avalara_transaction_type", avalaraTransactionType);
+                MParams.AddOpt("avalara_transaction_type", avalaraTransactionType);
                 return this;
             }
-            public CreateRequest AvalaraServiceType(int avalaraServiceType) 
+
+            public CreateRequest AvalaraServiceType(int avalaraServiceType)
             {
-                m_params.AddOpt("avalara_service_type", avalaraServiceType);
+                MParams.AddOpt("avalara_service_type", avalaraServiceType);
                 return this;
             }
-            public CreateRequest Sku(string sku) 
+
+            public CreateRequest Sku(string sku)
             {
-                m_params.AddOpt("sku", sku);
+                MParams.AddOpt("sku", sku);
                 return this;
             }
-            public CreateRequest AccountingCode(string accountingCode) 
+
+            public CreateRequest AccountingCode(string accountingCode)
             {
-                m_params.AddOpt("accounting_code", accountingCode);
+                MParams.AddOpt("accounting_code", accountingCode);
                 return this;
             }
-            public CreateRequest AccountingCategory1(string accountingCategory1) 
+
+            public CreateRequest AccountingCategory1(string accountingCategory1)
             {
-                m_params.AddOpt("accounting_category1", accountingCategory1);
+                MParams.AddOpt("accounting_category1", accountingCategory1);
                 return this;
             }
-            public CreateRequest AccountingCategory2(string accountingCategory2) 
+
+            public CreateRequest AccountingCategory2(string accountingCategory2)
             {
-                m_params.AddOpt("accounting_category2", accountingCategory2);
+                MParams.AddOpt("accounting_category2", accountingCategory2);
                 return this;
             }
-            public CreateRequest IsShippable(bool isShippable) 
+
+            public CreateRequest IsShippable(bool isShippable)
             {
-                m_params.AddOpt("is_shippable", isShippable);
+                MParams.AddOpt("is_shippable", isShippable);
                 return this;
             }
-            public CreateRequest ShippingFrequencyPeriod(int shippingFrequencyPeriod) 
+
+            public CreateRequest ShippingFrequencyPeriod(int shippingFrequencyPeriod)
             {
-                m_params.AddOpt("shipping_frequency_period", shippingFrequencyPeriod);
+                MParams.AddOpt("shipping_frequency_period", shippingFrequencyPeriod);
                 return this;
             }
-            public CreateRequest ShippingFrequencyPeriodUnit(Plan.ShippingFrequencyPeriodUnitEnum shippingFrequencyPeriodUnit) 
+
+            public CreateRequest ShippingFrequencyPeriodUnit(
+                ShippingFrequencyPeriodUnitEnum shippingFrequencyPeriodUnit)
             {
-                m_params.AddOpt("shipping_frequency_period_unit", shippingFrequencyPeriodUnit);
+                MParams.AddOpt("shipping_frequency_period_unit", shippingFrequencyPeriodUnit);
                 return this;
             }
-            public CreateRequest InvoiceNotes(string invoiceNotes) 
+
+            public CreateRequest InvoiceNotes(string invoiceNotes)
             {
-                m_params.AddOpt("invoice_notes", invoiceNotes);
+                MParams.AddOpt("invoice_notes", invoiceNotes);
                 return this;
             }
-            public CreateRequest MetaData(JToken metaData) 
+
+            public CreateRequest MetaData(JToken metaData)
             {
-                m_params.AddOpt("meta_data", metaData);
+                MParams.AddOpt("meta_data", metaData);
                 return this;
             }
-            public CreateRequest ShowDescriptionInInvoices(bool showDescriptionInInvoices) 
+
+            public CreateRequest ShowDescriptionInInvoices(bool showDescriptionInInvoices)
             {
-                m_params.AddOpt("show_description_in_invoices", showDescriptionInInvoices);
+                MParams.AddOpt("show_description_in_invoices", showDescriptionInInvoices);
                 return this;
             }
-            public CreateRequest ShowDescriptionInQuotes(bool showDescriptionInQuotes) 
+
+            public CreateRequest ShowDescriptionInQuotes(bool showDescriptionInQuotes)
             {
-                m_params.AddOpt("show_description_in_quotes", showDescriptionInQuotes);
+                MParams.AddOpt("show_description_in_quotes", showDescriptionInQuotes);
                 return this;
             }
-            public CreateRequest Giftable(bool giftable) 
+
+            public CreateRequest Giftable(bool giftable)
             {
-                m_params.AddOpt("giftable", giftable);
+                MParams.AddOpt("giftable", giftable);
                 return this;
             }
-            public CreateRequest Status(Plan.StatusEnum status) 
+
+            public CreateRequest Status(StatusEnum status)
             {
-                m_params.AddOpt("status", status);
+                MParams.AddOpt("status", status);
                 return this;
             }
-            public CreateRequest ClaimUrl(string claimUrl) 
+
+            public CreateRequest ClaimUrl(string claimUrl)
             {
-                m_params.AddOpt("claim_url", claimUrl);
+                MParams.AddOpt("claim_url", claimUrl);
                 return this;
             }
-            public CreateRequest TierStartingUnit(int index, int tierStartingUnit) 
+
+            public CreateRequest TierStartingUnit(int index, int tierStartingUnit)
             {
-                m_params.AddOpt("tiers[starting_unit][" + index + "]", tierStartingUnit);
+                MParams.AddOpt("tiers[starting_unit][" + index + "]", tierStartingUnit);
                 return this;
             }
-            public CreateRequest TierEndingUnit(int index, int tierEndingUnit) 
+
+            public CreateRequest TierEndingUnit(int index, int tierEndingUnit)
             {
-                m_params.AddOpt("tiers[ending_unit][" + index + "]", tierEndingUnit);
+                MParams.AddOpt("tiers[ending_unit][" + index + "]", tierEndingUnit);
                 return this;
             }
-            public CreateRequest TierPrice(int index, int tierPrice) 
+
+            public CreateRequest TierPrice(int index, int tierPrice)
             {
-                m_params.AddOpt("tiers[price][" + index + "]", tierPrice);
+                MParams.AddOpt("tiers[price][" + index + "]", tierPrice);
                 return this;
             }
-            public CreateRequest TierStartingUnitInDecimal(int index, string tierStartingUnitInDecimal) 
+
+            public CreateRequest TierStartingUnitInDecimal(int index, string tierStartingUnitInDecimal)
             {
-                m_params.AddOpt("tiers[starting_unit_in_decimal][" + index + "]", tierStartingUnitInDecimal);
+                MParams.AddOpt("tiers[starting_unit_in_decimal][" + index + "]", tierStartingUnitInDecimal);
                 return this;
             }
-            public CreateRequest TierEndingUnitInDecimal(int index, string tierEndingUnitInDecimal) 
+
+            public CreateRequest TierEndingUnitInDecimal(int index, string tierEndingUnitInDecimal)
             {
-                m_params.AddOpt("tiers[ending_unit_in_decimal][" + index + "]", tierEndingUnitInDecimal);
+                MParams.AddOpt("tiers[ending_unit_in_decimal][" + index + "]", tierEndingUnitInDecimal);
                 return this;
             }
-            public CreateRequest TierPriceInDecimal(int index, string tierPriceInDecimal) 
+
+            public CreateRequest TierPriceInDecimal(int index, string tierPriceInDecimal)
             {
-                m_params.AddOpt("tiers[price_in_decimal][" + index + "]", tierPriceInDecimal);
+                MParams.AddOpt("tiers[price_in_decimal][" + index + "]", tierPriceInDecimal);
                 return this;
             }
-            public CreateRequest ApplicableAddonId(int index, string applicableAddonId) 
+
+            public CreateRequest ApplicableAddonId(int index, string applicableAddonId)
             {
-                m_params.AddOpt("applicable_addons[id][" + index + "]", applicableAddonId);
+                MParams.AddOpt("applicable_addons[id][" + index + "]", applicableAddonId);
                 return this;
             }
-            public CreateRequest EventBasedAddonId(int index, string eventBasedAddonId) 
+
+            public CreateRequest EventBasedAddonId(int index, string eventBasedAddonId)
             {
-                m_params.AddOpt("event_based_addons[id][" + index + "]", eventBasedAddonId);
+                MParams.AddOpt("event_based_addons[id][" + index + "]", eventBasedAddonId);
                 return this;
             }
-            public CreateRequest EventBasedAddonQuantity(int index, int eventBasedAddonQuantity) 
+
+            public CreateRequest EventBasedAddonQuantity(int index, int eventBasedAddonQuantity)
             {
-                m_params.AddOpt("event_based_addons[quantity][" + index + "]", eventBasedAddonQuantity);
+                MParams.AddOpt("event_based_addons[quantity][" + index + "]", eventBasedAddonQuantity);
                 return this;
             }
-            public CreateRequest EventBasedAddonQuantityInDecimal(int index, string eventBasedAddonQuantityInDecimal) 
+
+            public CreateRequest EventBasedAddonQuantityInDecimal(int index, string eventBasedAddonQuantityInDecimal)
             {
-                m_params.AddOpt("event_based_addons[quantity_in_decimal][" + index + "]", eventBasedAddonQuantityInDecimal);
+                MParams.AddOpt("event_based_addons[quantity_in_decimal][" + index + "]",
+                    eventBasedAddonQuantityInDecimal);
                 return this;
             }
-            public CreateRequest EventBasedAddonOnEvent(int index, ChargeBee.Models.Enums.OnEventEnum eventBasedAddonOnEvent) 
+
+            public CreateRequest EventBasedAddonOnEvent(int index, OnEventEnum eventBasedAddonOnEvent)
             {
-                m_params.AddOpt("event_based_addons[on_event][" + index + "]", eventBasedAddonOnEvent);
+                MParams.AddOpt("event_based_addons[on_event][" + index + "]", eventBasedAddonOnEvent);
                 return this;
             }
-            public CreateRequest EventBasedAddonChargeOnce(int index, bool eventBasedAddonChargeOnce) 
+
+            public CreateRequest EventBasedAddonChargeOnce(int index, bool eventBasedAddonChargeOnce)
             {
-                m_params.AddOpt("event_based_addons[charge_once][" + index + "]", eventBasedAddonChargeOnce);
+                MParams.AddOpt("event_based_addons[charge_once][" + index + "]", eventBasedAddonChargeOnce);
                 return this;
             }
-            public CreateRequest AttachedAddonId(int index, string attachedAddonId) 
+
+            public CreateRequest AttachedAddonId(int index, string attachedAddonId)
             {
-                m_params.AddOpt("attached_addons[id][" + index + "]", attachedAddonId);
+                MParams.AddOpt("attached_addons[id][" + index + "]", attachedAddonId);
                 return this;
             }
-            public CreateRequest AttachedAddonQuantity(int index, int attachedAddonQuantity) 
+
+            public CreateRequest AttachedAddonQuantity(int index, int attachedAddonQuantity)
             {
-                m_params.AddOpt("attached_addons[quantity][" + index + "]", attachedAddonQuantity);
+                MParams.AddOpt("attached_addons[quantity][" + index + "]", attachedAddonQuantity);
                 return this;
             }
-            public CreateRequest AttachedAddonQuantityInDecimal(int index, string attachedAddonQuantityInDecimal) 
+
+            public CreateRequest AttachedAddonQuantityInDecimal(int index, string attachedAddonQuantityInDecimal)
             {
-                m_params.AddOpt("attached_addons[quantity_in_decimal][" + index + "]", attachedAddonQuantityInDecimal);
+                MParams.AddOpt("attached_addons[quantity_in_decimal][" + index + "]", attachedAddonQuantityInDecimal);
                 return this;
             }
-            public CreateRequest AttachedAddonBillingCycles(int index, int attachedAddonBillingCycles) 
+
+            public CreateRequest AttachedAddonBillingCycles(int index, int attachedAddonBillingCycles)
             {
-                m_params.AddOpt("attached_addons[billing_cycles][" + index + "]", attachedAddonBillingCycles);
+                MParams.AddOpt("attached_addons[billing_cycles][" + index + "]", attachedAddonBillingCycles);
                 return this;
             }
-            public CreateRequest AttachedAddonType(int index, PlanAttachedAddon.TypeEnum attachedAddonType) 
+
+            public CreateRequest AttachedAddonType(int index, PlanAttachedAddon.TypeEnum attachedAddonType)
             {
-                m_params.AddOpt("attached_addons[type][" + index + "]", attachedAddonType);
+                MParams.AddOpt("attached_addons[type][" + index + "]", attachedAddonType);
                 return this;
             }
         }
-        public class UpdateRequest : EntityRequest<UpdateRequest> 
+
+        public class UpdateRequest : EntityRequest<UpdateRequest>
         {
-            public UpdateRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public UpdateRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public UpdateRequest Name(string name) 
+            public UpdateRequest Name(string name)
             {
-                m_params.AddOpt("name", name);
+                MParams.AddOpt("name", name);
                 return this;
             }
-            public UpdateRequest InvoiceName(string invoiceName) 
+
+            public UpdateRequest InvoiceName(string invoiceName)
             {
-                m_params.AddOpt("invoice_name", invoiceName);
+                MParams.AddOpt("invoice_name", invoiceName);
                 return this;
             }
-            public UpdateRequest Description(string description) 
+
+            public UpdateRequest Description(string description)
             {
-                m_params.AddOpt("description", description);
+                MParams.AddOpt("description", description);
                 return this;
             }
-            public UpdateRequest TrialPeriod(int trialPeriod) 
+
+            public UpdateRequest TrialPeriod(int trialPeriod)
             {
-                m_params.AddOpt("trial_period", trialPeriod);
+                MParams.AddOpt("trial_period", trialPeriod);
                 return this;
             }
-            public UpdateRequest TrialPeriodUnit(Plan.TrialPeriodUnitEnum trialPeriodUnit) 
+
+            public UpdateRequest TrialPeriodUnit(TrialPeriodUnitEnum trialPeriodUnit)
             {
-                m_params.AddOpt("trial_period_unit", trialPeriodUnit);
+                MParams.AddOpt("trial_period_unit", trialPeriodUnit);
                 return this;
             }
-            public UpdateRequest Period(int period) 
+
+            public UpdateRequest Period(int period)
             {
-                m_params.AddOpt("period", period);
+                MParams.AddOpt("period", period);
                 return this;
             }
-            public UpdateRequest PeriodUnit(Plan.PeriodUnitEnum periodUnit) 
+
+            public UpdateRequest PeriodUnit(PeriodUnitEnum periodUnit)
             {
-                m_params.AddOpt("period_unit", periodUnit);
+                MParams.AddOpt("period_unit", periodUnit);
                 return this;
             }
-            public UpdateRequest SetupCost(int setupCost) 
+
+            public UpdateRequest SetupCost(int setupCost)
             {
-                m_params.AddOpt("setup_cost", setupCost);
+                MParams.AddOpt("setup_cost", setupCost);
                 return this;
             }
-            public UpdateRequest Price(int price) 
+
+            public UpdateRequest Price(int price)
             {
-                m_params.AddOpt("price", price);
+                MParams.AddOpt("price", price);
                 return this;
             }
-            public UpdateRequest PriceInDecimal(string priceInDecimal) 
+
+            public UpdateRequest PriceInDecimal(string priceInDecimal)
             {
-                m_params.AddOpt("price_in_decimal", priceInDecimal);
+                MParams.AddOpt("price_in_decimal", priceInDecimal);
                 return this;
             }
-            public UpdateRequest CurrencyCode(string currencyCode) 
+
+            public UpdateRequest CurrencyCode(string currencyCode)
             {
-                m_params.AddOpt("currency_code", currencyCode);
+                MParams.AddOpt("currency_code", currencyCode);
                 return this;
             }
-            public UpdateRequest BillingCycles(int billingCycles) 
+
+            public UpdateRequest BillingCycles(int billingCycles)
             {
-                m_params.AddOpt("billing_cycles", billingCycles);
+                MParams.AddOpt("billing_cycles", billingCycles);
                 return this;
             }
-            public UpdateRequest PricingModel(ChargeBee.Models.Enums.PricingModelEnum pricingModel) 
+
+            public UpdateRequest PricingModel(PricingModelEnum pricingModel)
             {
-                m_params.AddOpt("pricing_model", pricingModel);
+                MParams.AddOpt("pricing_model", pricingModel);
                 return this;
             }
+
             [Obsolete]
-            public UpdateRequest ChargeModel(ChargeModelEnum chargeModel) 
+            public UpdateRequest ChargeModel(ChargeModelEnum chargeModel)
             {
-                m_params.AddOpt("charge_model", chargeModel);
+                MParams.AddOpt("charge_model", chargeModel);
                 return this;
             }
-            public UpdateRequest FreeQuantity(int freeQuantity) 
+
+            public UpdateRequest FreeQuantity(int freeQuantity)
             {
-                m_params.AddOpt("free_quantity", freeQuantity);
+                MParams.AddOpt("free_quantity", freeQuantity);
                 return this;
             }
-            public UpdateRequest FreeQuantityInDecimal(string freeQuantityInDecimal) 
+
+            public UpdateRequest FreeQuantityInDecimal(string freeQuantityInDecimal)
             {
-                m_params.AddOpt("free_quantity_in_decimal", freeQuantityInDecimal);
+                MParams.AddOpt("free_quantity_in_decimal", freeQuantityInDecimal);
                 return this;
             }
-            public UpdateRequest AddonApplicability(Plan.AddonApplicabilityEnum addonApplicability) 
+
+            public UpdateRequest AddonApplicability(AddonApplicabilityEnum addonApplicability)
             {
-                m_params.AddOpt("addon_applicability", addonApplicability);
+                MParams.AddOpt("addon_applicability", addonApplicability);
                 return this;
             }
+
             [Obsolete]
-            public UpdateRequest DowngradePenalty(double downgradePenalty) 
+            public UpdateRequest DowngradePenalty(double downgradePenalty)
             {
-                m_params.AddOpt("downgrade_penalty", downgradePenalty);
+                MParams.AddOpt("downgrade_penalty", downgradePenalty);
                 return this;
             }
-            public UpdateRequest RedirectUrl(string redirectUrl) 
+
+            public UpdateRequest RedirectUrl(string redirectUrl)
             {
-                m_params.AddOpt("redirect_url", redirectUrl);
+                MParams.AddOpt("redirect_url", redirectUrl);
                 return this;
             }
-            public UpdateRequest EnabledInHostedPages(bool enabledInHostedPages) 
+
+            public UpdateRequest EnabledInHostedPages(bool enabledInHostedPages)
             {
-                m_params.AddOpt("enabled_in_hosted_pages", enabledInHostedPages);
+                MParams.AddOpt("enabled_in_hosted_pages", enabledInHostedPages);
                 return this;
             }
-            public UpdateRequest EnabledInPortal(bool enabledInPortal) 
+
+            public UpdateRequest EnabledInPortal(bool enabledInPortal)
             {
-                m_params.AddOpt("enabled_in_portal", enabledInPortal);
+                MParams.AddOpt("enabled_in_portal", enabledInPortal);
                 return this;
             }
-            public UpdateRequest Taxable(bool taxable) 
+
+            public UpdateRequest Taxable(bool taxable)
             {
-                m_params.AddOpt("taxable", taxable);
+                MParams.AddOpt("taxable", taxable);
                 return this;
             }
-            public UpdateRequest TaxProfileId(string taxProfileId) 
+
+            public UpdateRequest TaxProfileId(string taxProfileId)
             {
-                m_params.AddOpt("tax_profile_id", taxProfileId);
+                MParams.AddOpt("tax_profile_id", taxProfileId);
                 return this;
             }
-            public UpdateRequest TaxCode(string taxCode) 
+
+            public UpdateRequest TaxCode(string taxCode)
             {
-                m_params.AddOpt("tax_code", taxCode);
+                MParams.AddOpt("tax_code", taxCode);
                 return this;
             }
-            public UpdateRequest TaxjarProductCode(string taxjarProductCode) 
+
+            public UpdateRequest TaxjarProductCode(string taxjarProductCode)
             {
-                m_params.AddOpt("taxjar_product_code", taxjarProductCode);
+                MParams.AddOpt("taxjar_product_code", taxjarProductCode);
                 return this;
             }
-            public UpdateRequest AvalaraSaleType(ChargeBee.Models.Enums.AvalaraSaleTypeEnum avalaraSaleType) 
+
+            public UpdateRequest AvalaraSaleType(AvalaraSaleTypeEnum avalaraSaleType)
             {
-                m_params.AddOpt("avalara_sale_type", avalaraSaleType);
+                MParams.AddOpt("avalara_sale_type", avalaraSaleType);
                 return this;
             }
-            public UpdateRequest AvalaraTransactionType(int avalaraTransactionType) 
+
+            public UpdateRequest AvalaraTransactionType(int avalaraTransactionType)
             {
-                m_params.AddOpt("avalara_transaction_type", avalaraTransactionType);
+                MParams.AddOpt("avalara_transaction_type", avalaraTransactionType);
                 return this;
             }
-            public UpdateRequest AvalaraServiceType(int avalaraServiceType) 
+
+            public UpdateRequest AvalaraServiceType(int avalaraServiceType)
             {
-                m_params.AddOpt("avalara_service_type", avalaraServiceType);
+                MParams.AddOpt("avalara_service_type", avalaraServiceType);
                 return this;
             }
-            public UpdateRequest Sku(string sku) 
+
+            public UpdateRequest Sku(string sku)
             {
-                m_params.AddOpt("sku", sku);
+                MParams.AddOpt("sku", sku);
                 return this;
             }
-            public UpdateRequest AccountingCode(string accountingCode) 
+
+            public UpdateRequest AccountingCode(string accountingCode)
             {
-                m_params.AddOpt("accounting_code", accountingCode);
+                MParams.AddOpt("accounting_code", accountingCode);
                 return this;
             }
-            public UpdateRequest AccountingCategory1(string accountingCategory1) 
+
+            public UpdateRequest AccountingCategory1(string accountingCategory1)
             {
-                m_params.AddOpt("accounting_category1", accountingCategory1);
+                MParams.AddOpt("accounting_category1", accountingCategory1);
                 return this;
             }
-            public UpdateRequest AccountingCategory2(string accountingCategory2) 
+
+            public UpdateRequest AccountingCategory2(string accountingCategory2)
             {
-                m_params.AddOpt("accounting_category2", accountingCategory2);
+                MParams.AddOpt("accounting_category2", accountingCategory2);
                 return this;
             }
-            public UpdateRequest IsShippable(bool isShippable) 
+
+            public UpdateRequest IsShippable(bool isShippable)
             {
-                m_params.AddOpt("is_shippable", isShippable);
+                MParams.AddOpt("is_shippable", isShippable);
                 return this;
             }
-            public UpdateRequest ShippingFrequencyPeriod(int shippingFrequencyPeriod) 
+
+            public UpdateRequest ShippingFrequencyPeriod(int shippingFrequencyPeriod)
             {
-                m_params.AddOpt("shipping_frequency_period", shippingFrequencyPeriod);
+                MParams.AddOpt("shipping_frequency_period", shippingFrequencyPeriod);
                 return this;
             }
-            public UpdateRequest ShippingFrequencyPeriodUnit(Plan.ShippingFrequencyPeriodUnitEnum shippingFrequencyPeriodUnit) 
+
+            public UpdateRequest ShippingFrequencyPeriodUnit(
+                ShippingFrequencyPeriodUnitEnum shippingFrequencyPeriodUnit)
             {
-                m_params.AddOpt("shipping_frequency_period_unit", shippingFrequencyPeriodUnit);
+                MParams.AddOpt("shipping_frequency_period_unit", shippingFrequencyPeriodUnit);
                 return this;
             }
-            public UpdateRequest InvoiceNotes(string invoiceNotes) 
+
+            public UpdateRequest InvoiceNotes(string invoiceNotes)
             {
-                m_params.AddOpt("invoice_notes", invoiceNotes);
+                MParams.AddOpt("invoice_notes", invoiceNotes);
                 return this;
             }
-            public UpdateRequest MetaData(JToken metaData) 
+
+            public UpdateRequest MetaData(JToken metaData)
             {
-                m_params.AddOpt("meta_data", metaData);
+                MParams.AddOpt("meta_data", metaData);
                 return this;
             }
-            public UpdateRequest ShowDescriptionInInvoices(bool showDescriptionInInvoices) 
+
+            public UpdateRequest ShowDescriptionInInvoices(bool showDescriptionInInvoices)
             {
-                m_params.AddOpt("show_description_in_invoices", showDescriptionInInvoices);
+                MParams.AddOpt("show_description_in_invoices", showDescriptionInInvoices);
                 return this;
             }
-            public UpdateRequest ShowDescriptionInQuotes(bool showDescriptionInQuotes) 
+
+            public UpdateRequest ShowDescriptionInQuotes(bool showDescriptionInQuotes)
             {
-                m_params.AddOpt("show_description_in_quotes", showDescriptionInQuotes);
+                MParams.AddOpt("show_description_in_quotes", showDescriptionInQuotes);
                 return this;
             }
-            public UpdateRequest TierStartingUnit(int index, int tierStartingUnit) 
+
+            public UpdateRequest TierStartingUnit(int index, int tierStartingUnit)
             {
-                m_params.AddOpt("tiers[starting_unit][" + index + "]", tierStartingUnit);
+                MParams.AddOpt("tiers[starting_unit][" + index + "]", tierStartingUnit);
                 return this;
             }
-            public UpdateRequest TierEndingUnit(int index, int tierEndingUnit) 
+
+            public UpdateRequest TierEndingUnit(int index, int tierEndingUnit)
             {
-                m_params.AddOpt("tiers[ending_unit][" + index + "]", tierEndingUnit);
+                MParams.AddOpt("tiers[ending_unit][" + index + "]", tierEndingUnit);
                 return this;
             }
-            public UpdateRequest TierPrice(int index, int tierPrice) 
+
+            public UpdateRequest TierPrice(int index, int tierPrice)
             {
-                m_params.AddOpt("tiers[price][" + index + "]", tierPrice);
+                MParams.AddOpt("tiers[price][" + index + "]", tierPrice);
                 return this;
             }
-            public UpdateRequest TierStartingUnitInDecimal(int index, string tierStartingUnitInDecimal) 
+
+            public UpdateRequest TierStartingUnitInDecimal(int index, string tierStartingUnitInDecimal)
             {
-                m_params.AddOpt("tiers[starting_unit_in_decimal][" + index + "]", tierStartingUnitInDecimal);
+                MParams.AddOpt("tiers[starting_unit_in_decimal][" + index + "]", tierStartingUnitInDecimal);
                 return this;
             }
-            public UpdateRequest TierEndingUnitInDecimal(int index, string tierEndingUnitInDecimal) 
+
+            public UpdateRequest TierEndingUnitInDecimal(int index, string tierEndingUnitInDecimal)
             {
-                m_params.AddOpt("tiers[ending_unit_in_decimal][" + index + "]", tierEndingUnitInDecimal);
+                MParams.AddOpt("tiers[ending_unit_in_decimal][" + index + "]", tierEndingUnitInDecimal);
                 return this;
             }
-            public UpdateRequest TierPriceInDecimal(int index, string tierPriceInDecimal) 
+
+            public UpdateRequest TierPriceInDecimal(int index, string tierPriceInDecimal)
             {
-                m_params.AddOpt("tiers[price_in_decimal][" + index + "]", tierPriceInDecimal);
+                MParams.AddOpt("tiers[price_in_decimal][" + index + "]", tierPriceInDecimal);
                 return this;
             }
-            public UpdateRequest ApplicableAddonId(int index, string applicableAddonId) 
+
+            public UpdateRequest ApplicableAddonId(int index, string applicableAddonId)
             {
-                m_params.AddOpt("applicable_addons[id][" + index + "]", applicableAddonId);
+                MParams.AddOpt("applicable_addons[id][" + index + "]", applicableAddonId);
                 return this;
             }
-            public UpdateRequest EventBasedAddonId(int index, string eventBasedAddonId) 
+
+            public UpdateRequest EventBasedAddonId(int index, string eventBasedAddonId)
             {
-                m_params.AddOpt("event_based_addons[id][" + index + "]", eventBasedAddonId);
+                MParams.AddOpt("event_based_addons[id][" + index + "]", eventBasedAddonId);
                 return this;
             }
-            public UpdateRequest EventBasedAddonQuantity(int index, int eventBasedAddonQuantity) 
+
+            public UpdateRequest EventBasedAddonQuantity(int index, int eventBasedAddonQuantity)
             {
-                m_params.AddOpt("event_based_addons[quantity][" + index + "]", eventBasedAddonQuantity);
+                MParams.AddOpt("event_based_addons[quantity][" + index + "]", eventBasedAddonQuantity);
                 return this;
             }
-            public UpdateRequest EventBasedAddonQuantityInDecimal(int index, string eventBasedAddonQuantityInDecimal) 
+
+            public UpdateRequest EventBasedAddonQuantityInDecimal(int index, string eventBasedAddonQuantityInDecimal)
             {
-                m_params.AddOpt("event_based_addons[quantity_in_decimal][" + index + "]", eventBasedAddonQuantityInDecimal);
+                MParams.AddOpt("event_based_addons[quantity_in_decimal][" + index + "]",
+                    eventBasedAddonQuantityInDecimal);
                 return this;
             }
-            public UpdateRequest EventBasedAddonOnEvent(int index, ChargeBee.Models.Enums.OnEventEnum eventBasedAddonOnEvent) 
+
+            public UpdateRequest EventBasedAddonOnEvent(int index, OnEventEnum eventBasedAddonOnEvent)
             {
-                m_params.AddOpt("event_based_addons[on_event][" + index + "]", eventBasedAddonOnEvent);
+                MParams.AddOpt("event_based_addons[on_event][" + index + "]", eventBasedAddonOnEvent);
                 return this;
             }
-            public UpdateRequest EventBasedAddonChargeOnce(int index, bool eventBasedAddonChargeOnce) 
+
+            public UpdateRequest EventBasedAddonChargeOnce(int index, bool eventBasedAddonChargeOnce)
             {
-                m_params.AddOpt("event_based_addons[charge_once][" + index + "]", eventBasedAddonChargeOnce);
+                MParams.AddOpt("event_based_addons[charge_once][" + index + "]", eventBasedAddonChargeOnce);
                 return this;
             }
-            public UpdateRequest AttachedAddonId(int index, string attachedAddonId) 
+
+            public UpdateRequest AttachedAddonId(int index, string attachedAddonId)
             {
-                m_params.AddOpt("attached_addons[id][" + index + "]", attachedAddonId);
+                MParams.AddOpt("attached_addons[id][" + index + "]", attachedAddonId);
                 return this;
             }
-            public UpdateRequest AttachedAddonQuantity(int index, int attachedAddonQuantity) 
+
+            public UpdateRequest AttachedAddonQuantity(int index, int attachedAddonQuantity)
             {
-                m_params.AddOpt("attached_addons[quantity][" + index + "]", attachedAddonQuantity);
+                MParams.AddOpt("attached_addons[quantity][" + index + "]", attachedAddonQuantity);
                 return this;
             }
-            public UpdateRequest AttachedAddonQuantityInDecimal(int index, string attachedAddonQuantityInDecimal) 
+
+            public UpdateRequest AttachedAddonQuantityInDecimal(int index, string attachedAddonQuantityInDecimal)
             {
-                m_params.AddOpt("attached_addons[quantity_in_decimal][" + index + "]", attachedAddonQuantityInDecimal);
+                MParams.AddOpt("attached_addons[quantity_in_decimal][" + index + "]", attachedAddonQuantityInDecimal);
                 return this;
             }
-            public UpdateRequest AttachedAddonBillingCycles(int index, int attachedAddonBillingCycles) 
+
+            public UpdateRequest AttachedAddonBillingCycles(int index, int attachedAddonBillingCycles)
             {
-                m_params.AddOpt("attached_addons[billing_cycles][" + index + "]", attachedAddonBillingCycles);
+                MParams.AddOpt("attached_addons[billing_cycles][" + index + "]", attachedAddonBillingCycles);
                 return this;
             }
-            public UpdateRequest AttachedAddonType(int index, PlanAttachedAddon.TypeEnum attachedAddonType) 
+
+            public UpdateRequest AttachedAddonType(int index, PlanAttachedAddon.TypeEnum attachedAddonType)
             {
-                m_params.AddOpt("attached_addons[type][" + index + "]", attachedAddonType);
+                MParams.AddOpt("attached_addons[type][" + index + "]", attachedAddonType);
                 return this;
             }
         }
-        public class PlanListRequest : ListRequestBase<PlanListRequest> 
+
+        public class PlanListRequest : ListRequestBase<PlanListRequest>
         {
-            public PlanListRequest(string url) 
-                    : base(url)
+            public PlanListRequest(string url)
+                : base(url)
             {
             }
 
-            public StringFilter<PlanListRequest> Id() 
+            public StringFilter<PlanListRequest> Id()
             {
-                return new StringFilter<PlanListRequest>("id", this).SupportsMultiOperators(true);        
+                return new StringFilter<PlanListRequest>("id", this).SupportsMultiOperators(true);
             }
-            public StringFilter<PlanListRequest> Name() 
+
+            public StringFilter<PlanListRequest> Name()
             {
-                return new StringFilter<PlanListRequest>("name", this).SupportsMultiOperators(true);        
+                return new StringFilter<PlanListRequest>("name", this).SupportsMultiOperators(true);
             }
-            public NumberFilter<int, PlanListRequest> Price() 
+
+            public NumberFilter<int, PlanListRequest> Price()
             {
-                return new NumberFilter<int, PlanListRequest>("price", this);        
+                return new("price", this);
             }
-            public NumberFilter<int, PlanListRequest> Period() 
+
+            public NumberFilter<int, PlanListRequest> Period()
             {
-                return new NumberFilter<int, PlanListRequest>("period", this);        
+                return new("period", this);
             }
-            public EnumFilter<Plan.PeriodUnitEnum, PlanListRequest> PeriodUnit() 
+
+            public EnumFilter<PeriodUnitEnum, PlanListRequest> PeriodUnit()
             {
-                return new EnumFilter<Plan.PeriodUnitEnum, PlanListRequest>("period_unit", this);        
+                return new("period_unit", this);
             }
-            public NumberFilter<int, PlanListRequest> TrialPeriod() 
+
+            public NumberFilter<int, PlanListRequest> TrialPeriod()
             {
-                return new NumberFilter<int, PlanListRequest>("trial_period", this).SupportsPresenceOperator(true);        
+                return new NumberFilter<int, PlanListRequest>("trial_period", this).SupportsPresenceOperator(true);
             }
-            public EnumFilter<Plan.TrialPeriodUnitEnum, PlanListRequest> TrialPeriodUnit() 
+
+            public EnumFilter<TrialPeriodUnitEnum, PlanListRequest> TrialPeriodUnit()
             {
-                return new EnumFilter<Plan.TrialPeriodUnitEnum, PlanListRequest>("trial_period_unit", this);        
+                return new("trial_period_unit", this);
             }
-            public EnumFilter<Plan.AddonApplicabilityEnum, PlanListRequest> AddonApplicability() 
+
+            public EnumFilter<AddonApplicabilityEnum, PlanListRequest> AddonApplicability()
             {
-                return new EnumFilter<Plan.AddonApplicabilityEnum, PlanListRequest>("addon_applicability", this);        
+                return new("addon_applicability", this);
             }
-            public BooleanFilter<PlanListRequest> Giftable() 
+
+            public BooleanFilter<PlanListRequest> Giftable()
             {
-                return new BooleanFilter<PlanListRequest>("giftable", this);        
+                return new("giftable", this);
             }
+
             [Obsolete]
-            public EnumFilter<ChargeModelEnum, PlanListRequest> ChargeModel() 
+            public EnumFilter<ChargeModelEnum, PlanListRequest> ChargeModel()
             {
-                return new EnumFilter<ChargeModelEnum, PlanListRequest>("charge_model", this);        
+                return new("charge_model", this);
             }
-            public EnumFilter<ChargeBee.Models.Enums.PricingModelEnum, PlanListRequest> PricingModel() 
+
+            public EnumFilter<PricingModelEnum, PlanListRequest> PricingModel()
             {
-                return new EnumFilter<ChargeBee.Models.Enums.PricingModelEnum, PlanListRequest>("pricing_model", this);        
+                return new("pricing_model", this);
             }
-            public EnumFilter<Plan.StatusEnum, PlanListRequest> Status() 
+
+            public EnumFilter<StatusEnum, PlanListRequest> Status()
             {
-                return new EnumFilter<Plan.StatusEnum, PlanListRequest>("status", this);        
+                return new("status", this);
             }
-            public TimestampFilter<PlanListRequest> UpdatedAt() 
+
+            public TimestampFilter<PlanListRequest> UpdatedAt()
             {
-                return new TimestampFilter<PlanListRequest>("updated_at", this);        
+                return new("updated_at", this);
             }
-            public StringFilter<PlanListRequest> CurrencyCode() 
+
+            public StringFilter<PlanListRequest> CurrencyCode()
             {
-                return new StringFilter<PlanListRequest>("currency_code", this).SupportsMultiOperators(true);        
+                return new StringFilter<PlanListRequest>("currency_code", this).SupportsMultiOperators(true);
             }
         }
-        public class CopyRequest : EntityRequest<CopyRequest> 
+
+        public class CopyRequest : EntityRequest<CopyRequest>
         {
-            public CopyRequest(string url, HttpMethod method) 
-                    : base(url, method)
+            public CopyRequest(string url, HttpMethod method)
+                : base(url, method)
             {
             }
 
-            public CopyRequest FromSite(string fromSite) 
+            public CopyRequest FromSite(string fromSite)
             {
-                m_params.Add("from_site", fromSite);
+                MParams.Add("from_site", fromSite);
                 return this;
             }
-            public CopyRequest IdAtFromSite(string idAtFromSite) 
+
+            public CopyRequest IdAtFromSite(string idAtFromSite)
             {
-                m_params.Add("id_at_from_site", idAtFromSite);
+                MParams.Add("id_at_from_site", idAtFromSite);
                 return this;
             }
-            public CopyRequest Id(string id) 
+
+            public CopyRequest Id(string id)
             {
-                m_params.AddOpt("id", id);
+                MParams.AddOpt("id", id);
                 return this;
             }
-            public CopyRequest ForSiteMerging(bool forSiteMerging) 
+
+            public CopyRequest ForSiteMerging(bool forSiteMerging)
             {
-                m_params.AddOpt("for_site_merging", forSiteMerging);
+                MParams.AddOpt("for_site_merging", forSiteMerging);
                 return this;
             }
         }
+
         #endregion
-
-        public enum PeriodUnitEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "day")]
-            Day,
-            [EnumMember(Value = "week")]
-            Week,
-            [EnumMember(Value = "month")]
-            Month,
-            [EnumMember(Value = "year")]
-            Year,
-
-        }
-        public enum TrialPeriodUnitEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "day")]
-            Day,
-            [EnumMember(Value = "month")]
-            Month,
-
-        }
-        [Obsolete]
-        public enum ChargeModelEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "flat_fee")]
-            FlatFee,
-            [EnumMember(Value = "per_unit")]
-            PerUnit,
-            [EnumMember(Value = "tiered")]
-            Tiered,
-            [EnumMember(Value = "volume")]
-            Volume,
-            [EnumMember(Value = "stairstep")]
-            Stairstep,
-
-        }
-        public enum StatusEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "active")]
-            Active,
-            [EnumMember(Value = "archived")]
-            Archived,
-            [EnumMember(Value = "deleted")]
-            Deleted,
-
-        }
-        public enum AddonApplicabilityEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "all")]
-            All,
-            [EnumMember(Value = "restricted")]
-            Restricted,
-
-        }
-        public enum ShippingFrequencyPeriodUnitEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "year")]
-            Year,
-            [EnumMember(Value = "month")]
-            Month,
-            [EnumMember(Value = "week")]
-            Week,
-            [EnumMember(Value = "day")]
-            Day,
-
-        }
 
         #region Subclasses
+
         public class PlanTier : Resource
         {
-
-            public int StartingUnit() {
-                return GetValue<int>("starting_unit", true);
+            public int StartingUnit()
+            {
+                return GetValue<int>("starting_unit");
             }
 
-            public int? EndingUnit() {
+            public int? EndingUnit()
+            {
                 return GetValue<int?>("ending_unit", false);
             }
 
-            public int Price() {
-                return GetValue<int>("price", true);
+            public int Price()
+            {
+                return GetValue<int>("price");
             }
 
-            public string StartingUnitInDecimal() {
+            public string StartingUnitInDecimal()
+            {
                 return GetValue<string>("starting_unit_in_decimal", false);
             }
 
-            public string EndingUnitInDecimal() {
+            public string EndingUnitInDecimal()
+            {
                 return GetValue<string>("ending_unit_in_decimal", false);
             }
 
-            public string PriceInDecimal() {
+            public string PriceInDecimal()
+            {
                 return GetValue<string>("price_in_decimal", false);
             }
-
         }
+
         public class PlanApplicableAddon : Resource
         {
-
-            public string Id() {
-                return GetValue<string>("id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
-
         }
+
         public class PlanAttachedAddon : Resource
         {
             public enum TypeEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "recommended")]
-                Recommended,
-                [EnumMember(Value = "mandatory")]
-                Mandatory,
+                [EnumMember(Value = "recommended")] Recommended,
+                [EnumMember(Value = "mandatory")] Mandatory
             }
 
-            public string Id() {
-                return GetValue<string>("id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
 
-            public int Quantity() {
-                return GetValue<int>("quantity", true);
+            public int Quantity()
+            {
+                return GetValue<int>("quantity");
             }
 
-            public int? BillingCycles() {
+            public int? BillingCycles()
+            {
                 return GetValue<int?>("billing_cycles", false);
             }
 
-            public TypeEnum AttachedAddonType() {
-                return GetEnum<TypeEnum>("type", true);
+            public TypeEnum AttachedAddonType()
+            {
+                return GetEnum<TypeEnum>("type");
             }
 
-            public string QuantityInDecimal() {
+            public string QuantityInDecimal()
+            {
                 return GetValue<string>("quantity_in_decimal", false);
             }
-
         }
+
         public class PlanEventBasedAddon : Resource
         {
             public enum OnEventEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+
                 [EnumMember(Value = "subscription_creation")]
                 SubscriptionCreation,
+
                 [EnumMember(Value = "subscription_trial_start")]
                 SubscriptionTrialStart,
+
                 [EnumMember(Value = "plan_activation")]
                 PlanActivation,
+
                 [EnumMember(Value = "subscription_activation")]
                 SubscriptionActivation,
+
                 [EnumMember(Value = "contract_termination")]
-                ContractTermination,
+                ContractTermination
             }
 
-            public string Id() {
-                return GetValue<string>("id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
 
-            public int Quantity() {
-                return GetValue<int>("quantity", true);
+            public int Quantity()
+            {
+                return GetValue<int>("quantity");
             }
 
-            public OnEventEnum OnEvent() {
-                return GetEnum<OnEventEnum>("on_event", true);
+            public OnEventEnum OnEvent()
+            {
+                return GetEnum<OnEventEnum>("on_event");
             }
 
-            public bool ChargeOnce() {
-                return GetValue<bool>("charge_once", true);
+            public bool ChargeOnce()
+            {
+                return GetValue<bool>("charge_once");
             }
 
-            public string QuantityInDecimal() {
+            public string QuantityInDecimal()
+            {
                 return GetValue<string>("quantity_in_decimal", false);
             }
-
         }
 
         #endregion

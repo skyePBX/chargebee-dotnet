@@ -1,72 +1,54 @@
-using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
+using System.IO;
 using ChargeBee.Internal;
-using ChargeBee.Api;
-using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Hierarchy : Resource 
+    public class Hierarchy : Resource
     {
-    
-        public Hierarchy() { }
+        public Hierarchy()
+        {
+        }
 
         public Hierarchy(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Hierarchy(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Hierarchy(String jsonString)
+        public Hierarchy(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
 
         #region Methods
+
         #endregion
-        
+
         #region Properties
-        public string CustomerId 
-        {
-            get { return GetValue<string>("customer_id", true); }
-        }
-        public string ParentId 
-        {
-            get { return GetValue<string>("parent_id", false); }
-        }
-        public string PaymentOwnerId 
-        {
-            get { return GetValue<string>("payment_owner_id", true); }
-        }
-        public string InvoiceOwnerId 
-        {
-            get { return GetValue<string>("invoice_owner_id", true); }
-        }
-        public List<string> ChildrenIds 
-        {
-            get { return GetList<string>("children_ids"); }
-        }
-        
+
+        public string CustomerId => GetValue<string>("customer_id");
+
+        public string ParentId => GetValue<string>("parent_id", false);
+
+        public string PaymentOwnerId => GetValue<string>("payment_owner_id");
+
+        public string InvoiceOwnerId => GetValue<string>("invoice_owner_id");
+
+        public List<string> ChildrenIds => GetList<string>("children_ids");
+
         #endregion
-        
 
 
         #region Subclasses

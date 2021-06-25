@@ -1,14 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace ChargeBee.Api
+﻿namespace ChargeBee.Api
 {
-	public class ListRequest : ListRequestBase<ListRequest>
+    public class ListRequest : ListRequestBase<ListRequest>
     {
-
-		public ListRequest(string url):base(url)
-        {            
+        public ListRequest(string url) : base(url)
+        {
         }
-		       
-			
     }
 }

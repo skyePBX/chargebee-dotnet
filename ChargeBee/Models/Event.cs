@@ -1,228 +1,208 @@
 using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using ChargeBee.Internal;
 using ChargeBee.Api;
+using ChargeBee.Filters;
+using ChargeBee.Filters.enums;
+using ChargeBee.Internal;
 using ChargeBee.Models.Enums;
-using ChargeBee.Filters.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace ChargeBee.Models
 {
-
-    public class Event : Resource 
+    public class Event : Resource
     {
-    
-        public Event() { }
+        [Obsolete]
+        public enum WebhookStatusEnum
+        {
+            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
+            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
+            [EnumMember(Value = "not_configured")] NotConfigured,
+            [EnumMember(Value = "scheduled")] Scheduled,
+            [EnumMember(Value = "succeeded")] Succeeded,
+            [EnumMember(Value = "re_scheduled")] ReScheduled,
+            [EnumMember(Value = "failed")] Failed,
+            [EnumMember(Value = "skipped")] Skipped,
+            [EnumMember(Value = "not_applicable")] NotApplicable
+        }
+
+        public Event()
+        {
+        }
 
         public Event(Stream stream)
         {
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 JObj = JToken.Parse(reader.ReadToEnd());
-                apiVersionCheck (JObj);
+                ApiVersionCheck(JObj);
             }
         }
 
         public Event(TextReader reader)
         {
             JObj = JToken.Parse(reader.ReadToEnd());
-            apiVersionCheck (JObj);    
+            ApiVersionCheck(JObj);
         }
 
-        public Event(String jsonString)
+        public Event(string jsonString)
         {
             JObj = JToken.Parse(jsonString);
-            apiVersionCheck (JObj);
+            ApiVersionCheck(JObj);
         }
+
+        #region Requests
+
+        public class EventListRequest : ListRequestBase<EventListRequest>
+        {
+            public EventListRequest(string url)
+                : base(url)
+            {
+            }
+
+            [Obsolete]
+            public EventListRequest StartTime(long startTime)
+            {
+                MParams.AddOpt("start_time", startTime);
+                return this;
+            }
+
+            [Obsolete]
+            public EventListRequest EndTime(long endTime)
+            {
+                MParams.AddOpt("end_time", endTime);
+                return this;
+            }
+
+            public StringFilter<EventListRequest> Id()
+            {
+                return new StringFilter<EventListRequest>("id", this).SupportsMultiOperators(true);
+            }
+
+            public EnumFilter<WebhookStatusEnum, EventListRequest> WebhookStatus()
+            {
+                return new("webhook_status", this);
+            }
+
+            [Obsolete]
+            public EventListRequest WebhookStatus(WebhookStatusEnum webhookStatus)
+            {
+                MParams.AddOpt("webhook_status", webhookStatus);
+                return this;
+            }
+
+            public EnumFilter<EventTypeEnum, EventListRequest> EventType()
+            {
+                return new("event_type", this);
+            }
+
+            [Obsolete]
+            public EventListRequest EventType(EventTypeEnum eventType)
+            {
+                MParams.AddOpt("event_type", eventType);
+                return this;
+            }
+
+            public EnumFilter<SourceEnum, EventListRequest> Source()
+            {
+                return new("source", this);
+            }
+
+            public TimestampFilter<EventListRequest> OccurredAt()
+            {
+                return new("occurred_at", this);
+            }
+
+            public EventListRequest SortByOccurredAt(SortOrderEnum order)
+            {
+                MParams.AddOpt("sort_by[" + order.ToString().ToLower() + "]", "occurred_at");
+                return this;
+            }
+        }
+
+        #endregion
 
         #region Methods
+
         public static EventListRequest List()
         {
-            string url = ApiUtil.BuildUrl("events");
+            var url = ApiUtil.BuildUrl("events");
             return new EventListRequest(url);
         }
+
         public static EntityRequest<Type> Retrieve(string id)
         {
-            string url = ApiUtil.BuildUrl("events", CheckNull(id));
-            return new EntityRequest<Type>(url, HttpMethod.GET);
+            var url = ApiUtil.BuildUrl("events", CheckNull(id));
+            return new EntityRequest<Type>(url, HttpMethod.Get);
         }
+
         #endregion
-        
+
         #region Properties
-        public string Id 
-        {
-            get { return GetValue<string>("id", true); }
-        }
-        public DateTime OccurredAt 
-        {
-            get { return (DateTime)GetDateTime("occurred_at", true); }
-        }
-        public SourceEnum Source 
-        {
-            get { return GetEnum<SourceEnum>("source", true); }
-        }
-        public string User 
-        {
-            get { return GetValue<string>("user", false); }
-        }
-        [Obsolete]
-        public WebhookStatusEnum WebhookStatus 
-        {
-            get { return GetEnum<WebhookStatusEnum>("webhook_status", true); }
-        }
-        [Obsolete]
-        public string WebhookFailureReason 
-        {
-            get { return GetValue<string>("webhook_failure_reason", false); }
-        }
-        public List<EventWebhook> Webhooks 
-        {
-            get { return GetResourceList<EventWebhook>("webhooks"); }
-        }
-        public EventTypeEnum? EventType 
-        {
-            get { return GetEnum<EventTypeEnum>("event_type", false); }
-        }
-        public ApiVersionEnum? ApiVersion 
-        {
-            get { return GetEnum<ApiVersionEnum>("api_version", false); }
-        }
-        public EventContent Content
-        {
-            get { return new EventContent(GetValue<JToken>("content")); }
-        }
+
+        public string Id => GetValue<string>("id");
+
+        public DateTime OccurredAt => (DateTime) GetDateTime("occurred_at");
+
+        public SourceEnum Source => GetEnum<SourceEnum>("source");
+
+        public string User => GetValue<string>("user", false);
+
+        [Obsolete] public WebhookStatusEnum WebhookStatus => GetEnum<WebhookStatusEnum>("webhook_status");
+
+        [Obsolete] public string WebhookFailureReason => GetValue<string>("webhook_failure_reason", false);
+
+        public List<EventWebhook> Webhooks => GetResourceList<EventWebhook>("webhooks");
+
+        public EventTypeEnum? EventType => GetEnum<EventTypeEnum>("event_type", false);
+
+        public ApiVersionEnum? ApiVersion => GetEnum<ApiVersionEnum>("api_version", false);
+
+        public EventContent Content => new(GetValue<JToken>("content"));
+
         #endregion
-        
-        #region Requests
-        public class EventListRequest : ListRequestBase<EventListRequest> 
-        {
-            public EventListRequest(string url) 
-                    : base(url)
-            {
-            }
-
-            [Obsolete]
-            public EventListRequest StartTime(long startTime) 
-            {
-                m_params.AddOpt("start_time", startTime);
-                return this;
-            }
-            [Obsolete]
-            public EventListRequest EndTime(long endTime) 
-            {
-                m_params.AddOpt("end_time", endTime);
-                return this;
-            }
-            public StringFilter<EventListRequest> Id() 
-            {
-                return new StringFilter<EventListRequest>("id", this).SupportsMultiOperators(true);        
-            }
-            public EnumFilter<WebhookStatusEnum, EventListRequest> WebhookStatus() 
-            {
-                return new EnumFilter<WebhookStatusEnum, EventListRequest>("webhook_status", this);        
-            }
-            [Obsolete]
-            public EventListRequest WebhookStatus(WebhookStatusEnum webhookStatus) 
-            {
-                m_params.AddOpt("webhook_status", webhookStatus);
-                return this;
-            }
-            public EnumFilter<ChargeBee.Models.Enums.EventTypeEnum, EventListRequest> EventType() 
-            {
-                return new EnumFilter<ChargeBee.Models.Enums.EventTypeEnum, EventListRequest>("event_type", this);        
-            }
-            [Obsolete]
-            public EventListRequest EventType(ChargeBee.Models.Enums.EventTypeEnum eventType) 
-            {
-                m_params.AddOpt("event_type", eventType);
-                return this;
-            }
-            public EnumFilter<ChargeBee.Models.Enums.SourceEnum, EventListRequest> Source() 
-            {
-                return new EnumFilter<ChargeBee.Models.Enums.SourceEnum, EventListRequest>("source", this);        
-            }
-            public TimestampFilter<EventListRequest> OccurredAt() 
-            {
-                return new TimestampFilter<EventListRequest>("occurred_at", this);        
-            }
-            public EventListRequest SortByOccurredAt(SortOrderEnum order) {
-                m_params.AddOpt("sort_by["+order.ToString().ToLower()+"]","occurred_at");
-                return this;
-            }
-        }
-        #endregion
-
-        [Obsolete]
-        public enum WebhookStatusEnum
-        {
-
-            UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
-            dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-            [EnumMember(Value = "not_configured")]
-            NotConfigured,
-            [EnumMember(Value = "scheduled")]
-            Scheduled,
-            [EnumMember(Value = "succeeded")]
-            Succeeded,
-            [EnumMember(Value = "re_scheduled")]
-            ReScheduled,
-            [EnumMember(Value = "failed")]
-            Failed,
-            [EnumMember(Value = "skipped")]
-            Skipped,
-            [EnumMember(Value = "not_applicable")]
-            NotApplicable,
-
-        }
 
         #region Subclasses
+
         public class EventWebhook : Resource
         {
             public enum WebhookStatusEnum
             {
                 UnKnown, /*Indicates unexpected value for this enum. You can get this when there is a
                 dotnet-client version incompatibility. We suggest you to upgrade to the latest version */
-                [EnumMember(Value = "not_configured")]
-                NotConfigured,
-                [EnumMember(Value = "scheduled")]
-                Scheduled,
-                [EnumMember(Value = "succeeded")]
-                Succeeded,
-                [EnumMember(Value = "re_scheduled")]
-                ReScheduled,
-                [EnumMember(Value = "failed")]
-                Failed,
-                [EnumMember(Value = "skipped")]
-                Skipped,
-                [EnumMember(Value = "not_applicable")]
-                NotApplicable,
+                [EnumMember(Value = "not_configured")] NotConfigured,
+                [EnumMember(Value = "scheduled")] Scheduled,
+                [EnumMember(Value = "succeeded")] Succeeded,
+                [EnumMember(Value = "re_scheduled")] ReScheduled,
+                [EnumMember(Value = "failed")] Failed,
+                [EnumMember(Value = "skipped")] Skipped,
+                [EnumMember(Value = "not_applicable")] NotApplicable
             }
 
-            public string Id() {
-                return GetValue<string>("id", true);
+            public string Id()
+            {
+                return GetValue<string>("id");
             }
 
-            public WebhookStatusEnum WebhookStatus() {
-                return GetEnum<WebhookStatusEnum>("webhook_status", true);
+            public WebhookStatusEnum WebhookStatus()
+            {
+                return GetEnum<WebhookStatusEnum>("webhook_status");
             }
-
         }
 
         public class EventContent : ResultBase
         {
-
-            public EventContent () { }
+            public EventContent()
+            {
+            }
 
             internal EventContent(JToken jobj)
             {
-                m_jobj = jobj;
+                MJobj = jobj;
             }
         }
+
         #endregion
     }
 }
