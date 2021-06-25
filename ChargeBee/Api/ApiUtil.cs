@@ -135,7 +135,7 @@ namespace ChargeBee.Api
             }
             else
             {
-                HandleException(response);
+                //HandleException(response);
                 return null;
             }
         }
@@ -179,7 +179,7 @@ namespace ChargeBee.Api
             }
             else
             {
-                HandleException(response);
+                //HandleException(response);
                 return null;
             }
         }
