@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net5.0</TargetFrameworks>
-		<Version>2.8.9.1</Version>
+		<Version>2.8.9.2</Version>
 		<PackageId>chargebee</PackageId>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/chargebee/chargebee-dotnet</PackageProjectUrl>
