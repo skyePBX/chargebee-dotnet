@@ -124,7 +124,8 @@ namespace ChargeBee.Api
                 var result = new EntityResult(response.StatusCode, json);
                 return result;
             }
-            
+
+            HandleException(response);
             return null;
         }
 
@@ -171,7 +172,8 @@ namespace ChargeBee.Api
                 var result = new ListResult(response.StatusCode, json);
                 return result;
             }
-            
+
+            HandleException(response);
             return null;
         }
 
