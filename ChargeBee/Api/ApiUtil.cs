@@ -83,7 +83,7 @@ namespace ChargeBee.Api
 
         private static void HandleException(HttpResponseMessage response)
         {
-            var content = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             Dictionary<string, string> errorJson;
             try
             {
@@ -109,7 +109,7 @@ namespace ChargeBee.Api
         private static EntityResult GetEntityResult(string url, Params parameters, Dictionary<string, string> headers,
             ApiConfig env, HttpMethod meth)
         {
-            return GetEntityResultAsync(url, parameters, headers, env, meth).ConfigureAwait(false).GetAwaiter()
+            return GetEntityResultAsync(url, parameters, headers, env, meth).GetAwaiter()
                 .GetResult();
         }
 
@@ -117,15 +117,14 @@ namespace ChargeBee.Api
             Dictionary<string, string> headers, ApiConfig env, HttpMethod meth)
         {
             var request = GetRequestMessage(url, meth, parameters, headers, env);
-            var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var response = await HttpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
                 var result = new EntityResult(response.StatusCode, json);
                 return result;
             }
-
-            //HandleException(response);
+            
             return null;
         }
 
@@ -165,15 +164,14 @@ namespace ChargeBee.Api
         {
             url = $"{url}?{parameters.GetQuery(true)}";
             var request = GetRequestMessage(url, HttpMethod.Get, parameters, headers, env);
-            var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var response = await HttpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
                 var result = new ListResult(response.StatusCode, json);
                 return result;
             }
-
-            //HandleException(response);
+            
             return null;
         }
 

@@ -10,7 +10,7 @@ namespace ChargeBee.Api
 
         private readonly string _errorType;
 
-        public ApiException(HttpStatusCode httpStatusCode, Dictionary<string, string> errorResp)
+        public ApiException(HttpStatusCode httpStatusCode, IReadOnlyDictionary<string, string> errorResp)
             : base(errorResp["message"])
         {
             HttpStatusCode = httpStatusCode;
