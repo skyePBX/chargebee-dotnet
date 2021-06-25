@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using ChargeBee.Exceptions;
 using Newtonsoft.Json;
 
 namespace ChargeBee.Api
@@ -88,12 +87,13 @@ namespace ChargeBee.Api
             try
             {
                 errorJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
+                Console.WriteLine($"[ChargeBee]: {content}");
             }
             catch (JsonException e)
             {
                 throw new ArgumentException("Not in JSON format. Probably not a ChargeBee response. \n " + content, e);
             }
-
+            /*
             if (errorJson == null) return;
 
             errorJson.TryGetValue("type", out var type);
@@ -104,6 +104,7 @@ namespace ChargeBee.Api
                 "invalid_request" => new InvalidRequestException(response.StatusCode, errorJson),
                 _ => new ApiException(response.StatusCode, errorJson)
             };
+            */
         }
 
         private static EntityResult GetEntityResult(string url, Params parameters, Dictionary<string, string> headers,
