@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net5.0</TargetFrameworks>
-		<Version>2.8.9.2</Version>
+		<Version>2.8.9.3</Version>
 		<PackageId>chargebee</PackageId>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/chargebee/chargebee-dotnet</PackageProjectUrl>
@@ -51,8 +51,7 @@
 		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
 	</PropertyGroup>
-	<ItemGroup
-		Condition="$(TargetFramework.StartsWith('net4')) AND '$(MSBuildRuntimeType)' == 'Core' AND '$(OS)' != 'Windows_NT'">
+	<ItemGroup Condition="$(TargetFramework.StartsWith('net4')) AND '$(MSBuildRuntimeType)' == 'Core' AND '$(OS)' != 'Windows_NT'">
 		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="All" />
 	</ItemGroup>
 	<ItemGroup>
@@ -77,11 +76,7 @@
 				<Policies>
 					<TextStylePolicy inheritsSet="null" scope="application/xml" />
 					<XmlFormattingPolicy scope="application/xml">
-						<DefaultFormat OmitXmlDeclaration="False" IndentContent="True" AttributesInNewLine="False"
-						               MaxAttributesPerLine="10" WrapAttributes="False" AlignAttributes="False"
-						               AlignAttributeValues="False" QuoteChar="&quot;" SpacesBeforeAssignment="0"
-						               SpacesAfterAssignment="0" EmptyLinesBeforeStart="0" EmptyLinesAfterStart="0"
-						               EmptyLinesBeforeEnd="0" EmptyLinesAfterEnd="0" />
+						<DefaultFormat OmitXmlDeclaration="False" IndentContent="True" AttributesInNewLine="False" MaxAttributesPerLine="10" WrapAttributes="False" AlignAttributes="False" AlignAttributeValues="False" QuoteChar="&quot;" SpacesBeforeAssignment="0" SpacesAfterAssignment="0" EmptyLinesBeforeStart="0" EmptyLinesAfterStart="0" EmptyLinesBeforeEnd="0" EmptyLinesAfterEnd="0" />
 					</XmlFormattingPolicy>
 				</Policies>
 			</Properties>

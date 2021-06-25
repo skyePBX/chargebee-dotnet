@@ -92,7 +92,10 @@ namespace ChargeBee.Internal
         protected void ThrowIfKeyMissed(string key)
         {
             if (MJobj[key] == null)
-                throw new ArgumentException($"The property {key} is not present!");
+            {
+                //throw new ArgumentException($"The property {key} is not present!");
+                Console.WriteLine($"The property {key} is not present!");
+            }
         }
 
         protected static string CheckNull(string id)
